@@ -12,9 +12,11 @@ export default function HomeScreen() {
         Controla tus ingresos, gastos y presupuestos desde tu celular.
       </Text>
 
-      <Pressable style={styles.primaryButton}>
-        <Text style={styles.primaryText}>Iniciar Sesión</Text>
-      </Pressable>
+      <Link href="/login" asChild>
+        <Pressable style={styles.primaryButton}>
+          <Text style={styles.primaryText}>Iniciar Sesión</Text>
+        </Pressable>
+      </Link>
 
       <Link href="/register" asChild>
         <Pressable style={styles.secondaryButton}>
@@ -28,21 +30,21 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
     justifyContent: 'center',
-    alignItems: 'center',
+    padding: 24,
     backgroundColor: '#F4F7FB',
   },
   logo: {
-    fontSize: 70,
+    fontSize: 80,
+    textAlign: 'center',
     marginBottom: 20,
   },
   title: {
-    fontSize: 30,
+    fontSize: 42,
     fontWeight: 'bold',
     color: '#1E293B',
-    marginBottom: 12,
     textAlign: 'center',
+    marginBottom: 12,
   },
   subtitle: {
     fontSize: 16,
