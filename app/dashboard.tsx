@@ -1,8 +1,8 @@
 import {
-    getBalance,
-    getTotalExpense,
-    getTotalIncome,
-    transactions,
+  getBalance,
+  getTotalExpense,
+  getTotalIncome,
+  transactions,
 } from "@/data/transactions";
 import { Link } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -11,6 +11,7 @@ export default function DashboardScreen() {
   const totalIncome = getTotalIncome();
   const totalExpense = getTotalExpense();
   const balance = getBalance();
+  const latestTransactions = [...transactions].reverse();
 
   return (
     <View style={styles.container}>
@@ -47,12 +48,16 @@ export default function DashboardScreen() {
 
       <Text style={styles.sectionTitle}>Últimos Movimientos</Text>
 
-      {transactions.map((item) => (
+      {latestTransactions.map((item) => (
         <View key={item.id} style={styles.movementCard}>
-          <Text style={styles.movementText}>
-            {item.type === "income" ? "💰" : "💸"} {item.description}{" "}
-            {item.type === "income" ? "+" : "-"}${item.amount}
-          </Text>
+          <View>
+            <Text style={styles.movementText}>
+              {item.type === "income" ? "💰" : "💸"} {item.description}{" "}
+              {item.type === "income" ? "+" : "-"}${item.amount}
+            </Text>
+
+            <Text style={styles.categoryText}>📂 {item.category}</Text>
+          </View>
         </View>
       ))}
     </View>
@@ -148,5 +153,11 @@ const styles = StyleSheet.create({
   movementText: {
     fontSize: 16,
     color: "#1E293B",
+    fontWeight: "600",
+  },
+  categoryText: {
+    fontSize: 14,
+    color: "#64748B",
+    marginTop: 6,
   },
 });
