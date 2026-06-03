@@ -45,3 +45,7 @@ export function getTotalExpense() {
 export function getBalance() {
   return getTotalIncome() - getTotalExpense();
 }
+
+export function addTransaction(transaction: Transaction) {
+  transactions.push(transaction);
+}

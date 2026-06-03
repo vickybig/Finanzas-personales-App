@@ -1,15 +1,65 @@
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { addTransaction, transactions } from '@/data/transactions';
 
 export default function AddExpenseScreen() {
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
+
+  function handleSaveExpense() {
+    if (!amount || !description || !category) {
+      Alert.alert('Campos incompletos', 'Por favor completa todos los campos.');
+      return;
+    }
+
+    const numericAmount = Number(amount);
+
+    if (numericAmount <= 0 || isNaN(numericAmount)) {
+      Alert.alert('Monto inválido', 'Ingresa un monto válido mayor a 0.');
+      return;
+    }
+
+    addTransaction({
+      id: transactions.length + 1,
+      type: 'expense',
+      amount: numericAmount,
+      description,
+      category,
+    });
+
+    Alert.alert('Gasto guardado', 'El gasto se registró correctamente.');
+    router.push('/dashboard');
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Registrar Gasto</Text>
 
-      <TextInput style={styles.input} placeholder="Monto del gasto" keyboardType="numeric" />
-      <TextInput style={styles.input} placeholder="Descripción" />
-      <TextInput style={styles.input} placeholder="Categoría: Alimentación, Transporte, Servicios..." />
+      <TextInput
+        style={styles.input}
+        placeholder="Monto del gasto"
+        keyboardType="numeric"
+        value={amount}
+        onChangeText={setAmount}
+      />
 
-      <TouchableOpacity style={styles.button}>
+      <TextInput
+        style={styles.input}
+        placeholder="Descripción"
+        value={description}
+        onChangeText={setDescription}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Categoría: Alimentación, Transporte, Servicios..."
+        value={category}
+        onChangeText={setCategory}
+      />
+
+      <TouchableOpacity style={styles.button} onPress={handleSaveExpense}>
         <Text style={styles.buttonText}>Guardar Gasto</Text>
       </TouchableOpacity>
     </View>

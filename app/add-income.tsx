@@ -1,15 +1,65 @@
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { addTransaction, transactions } from '@/data/transactions';
 
 export default function AddIncomeScreen() {
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
+
+  function handleSaveIncome() {
+    if (!amount || !description || !category) {
+      Alert.alert('Campos incompletos', 'Por favor completa todos los campos.');
+      return;
+    }
+
+    const numericAmount = Number(amount);
+
+    if (numericAmount <= 0 || isNaN(numericAmount)) {
+      Alert.alert('Monto inválido', 'Ingresa un monto válido mayor a 0.');
+      return;
+    }
+
+    addTransaction({
+      id: transactions.length + 1,
+      type: 'income',
+      amount: numericAmount,
+      description,
+      category,
+    });
+
+    Alert.alert('Ingreso guardado', 'El ingreso se registró correctamente.');
+    router.push('/dashboard');
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Registrar Ingreso</Text>
 
-      <TextInput style={styles.input} placeholder="Monto del ingreso" keyboardType="numeric" />
-      <TextInput style={styles.input} placeholder="Descripción" />
-      <TextInput style={styles.input} placeholder="Categoría: Salario, Freelance, Ventas..." />
+      <TextInput
+        style={styles.input}
+        placeholder="Monto del ingreso"
+        keyboardType="numeric"
+        value={amount}
+        onChangeText={setAmount}
+      />
 
-      <TouchableOpacity style={styles.button}>
+      <TextInput
+        style={styles.input}
+        placeholder="Descripción"
+        value={description}
+        onChangeText={setDescription}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Categoría: Salario, Freelance, Ventas..."
+        value={category}
+        onChangeText={setCategory}
+      />
+
+      <TouchableOpacity style={styles.button} onPress={handleSaveIncome}>
         <Text style={styles.buttonText}>Guardar Ingreso</Text>
       </TouchableOpacity>
     </View>
