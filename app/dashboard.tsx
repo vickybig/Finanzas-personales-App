@@ -2,16 +2,42 @@ import {
   getBalance,
   getTotalExpense,
   getTotalIncome,
-  transactions,
+  loadTransactions,
+  Transaction,
 } from "@/data/transactions";
-import { Link } from "expo-router";
+import { Link, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function DashboardScreen() {
-  const totalIncome = getTotalIncome();
-  const totalExpense = getTotalExpense();
-  const balance = getBalance();
-  const latestTransactions = [...transactions].reverse();
+  const [transactionList, setTransactionList] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      async function loadData() {
+        setIsLoading(true);
+        const savedTransactions = await loadTransactions();
+        setTransactionList(savedTransactions || []);
+        setIsLoading(false);
+      }
+
+      loadData();
+    }, [])
+  );
+
+  const totalIncome = getTotalIncome(transactionList);
+  const totalExpense = getTotalExpense(transactionList);
+  const balance = getBalance(transactionList);
+  const latestTransactions = [...(transactionList || [])  ].reverse();
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.greeting}>Cargando FinGo...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -50,14 +76,12 @@ export default function DashboardScreen() {
 
       {latestTransactions.map((item) => (
         <View key={item.id} style={styles.movementCard}>
-          <View>
-            <Text style={styles.movementText}>
-              {item.type === "income" ? "💰" : "💸"} {item.description}{" "}
-              {item.type === "income" ? "+" : "-"}${item.amount}
-            </Text>
+          <Text style={styles.movementText}>
+            {item.type === "income" ? "💰" : "💸"} {item.description}{" "}
+            {item.type === "income" ? "+" : "-"}${item.amount}
+          </Text>
 
-            <Text style={styles.categoryText}>📂 {item.category}</Text>
-          </View>
+          <Text style={styles.categoryText}>📂 {item.category}</Text>
         </View>
       ))}
     </View>

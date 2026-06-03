@@ -1,14 +1,21 @@
+import { addTransaction } from '@/data/transactions';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { addTransaction, transactions } from '@/data/transactions';
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function AddExpenseScreen() {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
 
-  function handleSaveExpense() {
+  async function handleSaveExpense() {
     if (!amount || !description || !category) {
       Alert.alert('Campos incompletos', 'Por favor completa todos los campos.');
       return;
@@ -21,8 +28,8 @@ export default function AddExpenseScreen() {
       return;
     }
 
-    addTransaction({
-      id: transactions.length + 1,
+    await addTransaction({
+      id: Date.now(),
       type: 'expense',
       amount: numericAmount,
       description,

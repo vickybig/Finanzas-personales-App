@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 export type Transaction = {
   id: number;
   type: 'income' | 'expense';
@@ -6,7 +8,9 @@ export type Transaction = {
   category: string;
 };
 
-export const transactions: Transaction[] = [
+const STORAGE_KEY = 'fingo_transactions';
+
+const initialTransactions: Transaction[] = [
   {
     id: 1,
     type: 'income',
@@ -30,22 +34,38 @@ export const transactions: Transaction[] = [
   },
 ];
 
-export function getTotalIncome() {
-  return transactions
+export async function loadTransactions(): Promise<Transaction[]> {
+  const data = await AsyncStorage.getItem(STORAGE_KEY);
+
+  if (data) {
+    return JSON.parse(data);
+  }
+
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(initialTransactions));
+  return initialTransactions;
+}
+
+export async function addTransaction(transaction: Transaction) {
+  const currentTransactions = await loadTransactions();
+  const updatedTransactions = [...currentTransactions, transaction];
+
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTransactions));
+
+  return updatedTransactions;
+}
+
+export function getTotalIncome(transactionList: Transaction[]) {
+  return transactionList
     .filter((item) => item.type === 'income')
     .reduce((total, item) => total + item.amount, 0);
 }
 
-export function getTotalExpense() {
-  return transactions
+export function getTotalExpense(transactionList: Transaction[]) {
+  return transactionList
     .filter((item) => item.type === 'expense')
     .reduce((total, item) => total + item.amount, 0);
 }
 
-export function getBalance() {
-  return getTotalIncome() - getTotalExpense();
-}
-
-export function addTransaction(transaction: Transaction) {
-  transactions.push(transaction);
+export function getBalance(transactionList: Transaction[]) {
+  return getTotalIncome(transactionList) - getTotalExpense(transactionList);
 }
