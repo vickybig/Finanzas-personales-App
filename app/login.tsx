@@ -14,9 +14,11 @@ export default function LoginScreen() {
       <TextInput style={styles.input} placeholder="Correo electrónico" keyboardType="email-address" />
       <TextInput style={styles.input} placeholder="Contraseña" secureTextEntry />
 
-      <TouchableOpacity style={styles.primaryButton}>
+      <Link href="/dashboard" asChild>
+       <TouchableOpacity style={styles.primaryButton}>
         <Text style={styles.primaryText}>Ingresar</Text>
-      </TouchableOpacity>
+       </TouchableOpacity>
+      </Link>
 
       <Link href="/register" style={styles.registerText}>
         ¿No tienes una cuenta? Crear cuenta
