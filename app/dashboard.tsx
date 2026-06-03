@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function DashboardScreen() {
@@ -22,13 +23,17 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      <Pressable style={styles.incomeButton}>
-        <Text style={styles.buttonText}>Registrar Ingreso</Text>
-      </Pressable>
+      <Link href="/add-income" asChild>
+        <Pressable style={styles.incomeButton}>
+          <Text style={styles.buttonText}>Registrar Ingreso</Text>
+        </Pressable>
+      </Link>
 
-      <Pressable style={styles.expenseButton}>
-        <Text style={styles.buttonText}>Registrar Gasto</Text>
-      </Pressable>
+      <Link href="/add-expense" asChild>
+        <Pressable style={styles.expenseButton}>
+          <Text style={styles.buttonText}>Registrar Gasto</Text>
+        </Pressable>
+      </Link>
 
       <Text style={styles.sectionTitle}>Últimos Movimientos</Text>
 
@@ -133,4 +138,4 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 10,
   },
-}); 
+});
