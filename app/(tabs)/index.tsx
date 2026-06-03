@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
@@ -5,7 +6,7 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <Text style={styles.logo}>💰</Text>
 
-      <Text style={styles.title}>FinanzApp Ecuador</Text>
+      <Text style={styles.title}>FinGo</Text>
 
       <Text style={styles.subtitle}>
         Controla tus ingresos, gastos y presupuestos desde tu celular.
@@ -15,9 +16,11 @@ export default function HomeScreen() {
         <Text style={styles.primaryText}>Iniciar Sesión</Text>
       </Pressable>
 
-      <Pressable style={styles.secondaryButton}>
-        <Text style={styles.secondaryText}>Crear Cuenta</Text>
-      </Pressable>
+      <Link href="/register" asChild>
+        <Pressable style={styles.secondaryButton}>
+          <Text style={styles.secondaryText}>Crear Cuenta</Text>
+        </Pressable>
+      </Link>
     </View>
   );
 }
