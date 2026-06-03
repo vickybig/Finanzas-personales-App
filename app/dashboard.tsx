@@ -1,25 +1,30 @@
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { getBalance, getTotalExpense, getTotalIncome } from '@/data/transactions';
 
 export default function DashboardScreen() {
+  const totalIncome = getTotalIncome();
+  const totalExpense = getTotalExpense();
+  const balance = getBalance();
+
   return (
     <View style={styles.container}>
       <Text style={styles.greeting}>Hola, Victor 👋</Text>
 
       <View style={styles.balanceCard}>
         <Text style={styles.balanceLabel}>Saldo Total</Text>
-        <Text style={styles.balanceAmount}>$1,250.00</Text>
+        <Text style={styles.balanceAmount}>${balance.toFixed(2)}</Text>
       </View>
 
       <View style={styles.summaryContainer}>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>Ingresos</Text>
-          <Text style={styles.income}>+$2,000.00</Text>
+          <Text style={styles.income}>+${totalIncome.toFixed(2)}</Text>
         </View>
 
         <View style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>Gastos</Text>
-          <Text style={styles.expense}>-$750.00</Text>
+          <Text style={styles.expense}>-${totalExpense.toFixed(2)}</Text>
         </View>
       </View>
 
