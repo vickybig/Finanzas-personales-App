@@ -38,6 +38,7 @@ export default function AddIncomeScreen() {
       amount: numericAmount,
       description: cleanDescription,
       category: cleanCategory,
+      date: new Date().toISOString(),
     });
 
     setAmount('');

@@ -6,6 +6,7 @@ export type Transaction = {
   amount: number;
   description: string;
   category: string;
+  date: string;
 };
 
 const STORAGE_KEY = 'fingo_transactions';
@@ -17,6 +18,7 @@ const initialTransactions: Transaction[] = [
     amount: 500,
     description: 'Salario',
     category: 'Trabajo',
+    date: new Date().toISOString(),
   },
   {
     id: 2,
@@ -24,6 +26,7 @@ const initialTransactions: Transaction[] = [
     amount: 80,
     description: 'Supermercado',
     category: 'Alimentación',
+    date: new Date().toISOString(),
   },
   {
     id: 3,
@@ -31,6 +34,7 @@ const initialTransactions: Transaction[] = [
     amount: 20,
     description: 'Transporte',
     category: 'Movilidad',
+    date: new Date().toISOString(),
   },
 ];
 
@@ -38,7 +42,12 @@ export async function loadTransactions(): Promise<Transaction[]> {
   const data = await AsyncStorage.getItem(STORAGE_KEY);
 
   if (data) {
-    return JSON.parse(data);
+    const parsedTransactions: Transaction[] = JSON.parse(data);
+
+    return parsedTransactions.map((transaction) => ({
+      ...transaction,
+      date: transaction.date || new Date(transaction.id).toISOString(),
+    }));
   }
 
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(initialTransactions));

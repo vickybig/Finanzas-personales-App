@@ -38,6 +38,7 @@ export default function AddExpenseScreen() {
       amount: numericAmount,
       description: cleanDescription,
       category: cleanCategory,
+      date: new Date().toISOString(),
     });
 
     setAmount('');

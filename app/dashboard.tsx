@@ -94,6 +94,12 @@ export default function DashboardScreen() {
         </Pressable>
       </Link>
 
+      <Link href="/statistics" asChild>
+        <Pressable style={styles.statisticsButton}>
+          <Text style={styles.buttonText}>Ver Estadísticas 📊</Text>
+        </Pressable>
+      </Link>
+
       <Text style={styles.sectionTitle}>Últimos Movimientos</Text>
 
       {latestTransactions.length === 0 ? (
@@ -197,6 +203,13 @@ const styles = StyleSheet.create({
   },
   expenseButton: {
     backgroundColor: '#DC2626',
+    padding: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  statisticsButton: {
+    backgroundColor: '#2563EB',
     padding: 16,
     borderRadius: 14,
     alignItems: 'center',
