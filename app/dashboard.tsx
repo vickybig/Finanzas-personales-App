@@ -200,6 +200,12 @@ export default function DashboardScreen() {
         </Pressable>
       </Link>
 
+      <Link href="/goals" asChild>
+         <Pressable style={styles.goalsButton}>
+           <Text style={styles.buttonText}>Ver Metas 🎯</Text>
+         </Pressable>
+      </Link>
+
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Últimos Movimientos</Text>
         <Text style={styles.movementCount}>{latestTransactions.length} registros</Text>
@@ -375,12 +381,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statisticsButton: {
-    backgroundColor: '#0F172A',
-    padding: 17,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginBottom: 25,
+   backgroundColor: '#0F172A',
+   padding: 17,
+   borderRadius: 16,
+   alignItems: 'center',
+   marginBottom: 12,
   },
+
+  goalsButton: {
+   backgroundColor: '#10B981',
+   padding: 17,
+   borderRadius: 16,
+   alignItems: 'center',
+   marginBottom: 25,
+  },
+
   buttonIcon: {
     fontSize: 20,
     marginBottom: 4,
