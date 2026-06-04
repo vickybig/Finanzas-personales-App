@@ -67,7 +67,7 @@ export default function AddExpenseScreen() {
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
     >
-      <Text style={styles.appName}>FINLY</Text>
+      <Text style={styles.appName}>FINGO</Text>
       <Text style={styles.title}>Registrar Gasto</Text>
 
       <Text style={styles.label}>Monto</Text>
