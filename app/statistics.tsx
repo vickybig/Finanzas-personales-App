@@ -28,16 +28,39 @@ const months = [
   'Dic',
 ];
 
+const officialExpenseCategories = [
+  'Alimentación',
+  'Transporte',
+  'Vivienda',
+  'Entretenimiento',
+  'Servicios',
+  'Restaurantes',
+  'Salud',
+  'Trabajo',
+  'Otros',
+];
+
 const categoryColors = [
-  '#2563EB',
   '#16A34A',
-  '#DC2626',
-  '#F97316',
+  '#2563EB',
   '#7C3AED',
+  '#F97316',
+  '#DC2626',
+  '#DB2777',
   '#0891B2',
   '#CA8A04',
-  '#DB2777',
+  '#64748B',
 ];
+
+function normalizeExpenseCategory(category: string) {
+  const cleanCategory = category.trim();
+
+  if (officialExpenseCategories.includes(cleanCategory)) {
+    return cleanCategory;
+  }
+
+  return 'Otros';
+}
 
 export default function StatisticsScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -60,15 +83,8 @@ export default function StatisticsScreen() {
   const expensesByCategory: Record<string, number> = {};
   const expensesBySelectedCategory = Array(12).fill(0);
 
-  const expenseCategories = Array.from(
-    new Set(
-      transactions
-        .filter((transaction) => transaction.type === 'expense')
-        .map((transaction) => transaction.category)
-    )
-  );
-
-  const activeCategory = selectedCategory || expenseCategories[0] || '';
+  const expenseCategories = officialExpenseCategories;
+  const activeCategory = selectedCategory || expenseCategories[0];
 
   transactions.forEach((transaction) => {
     const transactionDate = new Date(transaction.date);
@@ -79,12 +95,14 @@ export default function StatisticsScreen() {
       if (transaction.type === 'income') {
         monthlyIncome[monthIndex] += transaction.amount;
       } else {
+        const normalizedCategory = normalizeExpenseCategory(transaction.category);
+
         monthlyExpense[monthIndex] += transaction.amount;
 
-        expensesByCategory[transaction.category] =
-          (expensesByCategory[transaction.category] || 0) + transaction.amount;
+        expensesByCategory[normalizedCategory] =
+          (expensesByCategory[normalizedCategory] || 0) + transaction.amount;
 
-        if (transaction.category === activeCategory) {
+        if (normalizedCategory === activeCategory) {
           expensesBySelectedCategory[monthIndex] += transaction.amount;
         }
       }
@@ -99,15 +117,16 @@ export default function StatisticsScreen() {
   );
   const balance = totalIncome - totalExpense;
 
-  const categoryData = Object.entries(expensesByCategory)
-    .sort((a, b) => b[1] - a[1])
-    .map(([category, amount], index) => ({
+  const categoryData = expenseCategories
+    .map((category, index) => ({
       name: category,
-      amount,
+      amount: expensesByCategory[category] || 0,
       color: categoryColors[index % categoryColors.length],
       legendFontColor: '#1E293B',
       legendFontSize: 13,
-    }));
+    }))
+    .filter((item) => item.amount > 0)
+    .sort((a, b) => b.amount - a.amount);
 
   const chartConfig = {
     backgroundGradientFrom: '#FFFFFF',
@@ -198,65 +217,57 @@ export default function StatisticsScreen() {
       <View style={styles.chartCard}>
         <Text style={styles.chartTitle}>Histórico por categoría</Text>
 
-        {expenseCategories.length === 0 ? (
-          <Text style={styles.emptyText}>
-            Aún no hay categorías de gasto para mostrar.
-          </Text>
-        ) : (
-          <>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.categoryButtonsContainer}
-            >
-              {expenseCategories.map((category) => {
-                const isSelected = category === activeCategory;
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoryButtonsContainer}
+        >
+          {expenseCategories.map((category) => {
+            const isSelected = category === activeCategory;
 
-                return (
-                  <Pressable
-                    key={category}
-                    style={[
-                      styles.categoryButton,
-                      isSelected && styles.categoryButtonActive,
-                    ]}
-                    onPress={() => setSelectedCategory(category)}
-                  >
-                    <Text
-                      style={[
-                        styles.categoryButtonText,
-                        isSelected && styles.categoryButtonTextActive,
-                      ]}
-                    >
-                      {category}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
+            return (
+              <Pressable
+                key={category}
+                style={[
+                  styles.categoryButton,
+                  isSelected && styles.categoryButtonActive,
+                ]}
+                onPress={() => setSelectedCategory(category)}
+              >
+                <Text
+                  style={[
+                    styles.categoryButtonText,
+                    isSelected && styles.categoryButtonTextActive,
+                  ]}
+                >
+                  {category}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
-            <Text style={styles.selectedCategoryText}>
-              {activeCategory}: ${totalSelectedCategory.toFixed(2)} en el año
-            </Text>
+        <Text style={styles.selectedCategoryText}>
+          {activeCategory}: ${totalSelectedCategory.toFixed(2)} en el año
+        </Text>
 
-            <BarChart
-              data={{
-                labels: months,
-                datasets: [
-                  {
-                    data: expensesBySelectedCategory,
-                  },
-                ],
-              }}
-              width={screenWidth - 40}
-              height={260}
-              yAxisLabel="$"
-              yAxisSuffix=""
-              chartConfig={chartConfig}
-              verticalLabelRotation={30}
-              fromZero
-            />
-          </>
-        )}
+        <BarChart
+          data={{
+            labels: months,
+            datasets: [
+              {
+                data: expensesBySelectedCategory,
+              },
+            ],
+          }}
+          width={screenWidth - 40}
+          height={260}
+          yAxisLabel="$"
+          yAxisSuffix=""
+          chartConfig={chartConfig}
+          verticalLabelRotation={30}
+          fromZero
+        />
       </View>
 
       <View style={styles.chartCard}>
@@ -427,7 +438,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   categoryButtonActive: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#10B981',
   },
   categoryButtonText: {
     color: '#334155',
