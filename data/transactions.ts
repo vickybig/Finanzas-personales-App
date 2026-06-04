@@ -66,6 +66,18 @@ export async function deleteTransaction(id: number) {
   return updatedTransactions;
 }
 
+export async function updateTransaction(updatedTransaction: Transaction) {
+  const currentTransactions = await loadTransactions();
+
+  const updatedTransactions = currentTransactions.map((transaction) =>
+    transaction.id === updatedTransaction.id ? updatedTransaction : transaction
+  );
+
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTransactions));
+
+  return updatedTransactions;
+}
+
 export function getTotalIncome(transactionList: Transaction[]) {
   return transactionList
     .filter((item) => item.type === 'income')

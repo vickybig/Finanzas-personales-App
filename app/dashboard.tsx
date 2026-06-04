@@ -6,7 +6,7 @@ import {
   loadTransactions,
   Transaction,
 } from '@/data/transactions';
-import { Link, useFocusEffect } from 'expo-router';
+import { Link, router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -107,9 +107,22 @@ export default function DashboardScreen() {
                 {item.type === 'income' ? '+' : '-'}${item.amount.toFixed(2)}
               </Text>
 
-              <Pressable onPress={() => handleDeleteTransaction(item.id)}>
-                <Text style={styles.deleteText}>🗑️</Text>
-              </Pressable>
+              <View style={styles.actionsContainer}>
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: '/edit-transaction',
+                      params: { id: String(item.id) },
+                    })
+                  }
+                >
+                  <Text style={styles.editText}>✏️</Text>
+                </Pressable>
+
+                <Pressable onPress={() => handleDeleteTransaction(item.id)}>
+                  <Text style={styles.deleteText}>🗑️</Text>
+                </Pressable>
+              </View>
             </View>
 
             <Text style={styles.categoryText}>📂 {item.category}</Text>
@@ -216,6 +229,15 @@ const styles = StyleSheet.create({
     color: '#1E293B',
     fontWeight: '600',
     flex: 1,
+  },
+  actionsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  editText: {
+    fontSize: 20,
+    marginLeft: 12,
   },
   deleteText: {
     fontSize: 20,
