@@ -16,14 +16,18 @@ export default function AddExpenseScreen() {
   const [category, setCategory] = useState('');
 
   async function handleSaveExpense() {
-    if (!amount || !description || !category) {
+    const cleanAmount = amount.trim();
+    const cleanDescription = description.trim();
+    const cleanCategory = category.trim();
+
+    if (!cleanAmount || !cleanDescription || !cleanCategory) {
       Alert.alert('Campos incompletos', 'Por favor completa todos los campos.');
       return;
     }
 
-    const numericAmount = Number(amount);
+    const numericAmount = Number(cleanAmount.replace(',', '.'));
 
-    if (numericAmount <= 0 || isNaN(numericAmount)) {
+    if (isNaN(numericAmount) || numericAmount <= 0) {
       Alert.alert('Monto inválido', 'Ingresa un monto válido mayor a 0.');
       return;
     }
@@ -32,9 +36,13 @@ export default function AddExpenseScreen() {
       id: Date.now(),
       type: 'expense',
       amount: numericAmount,
-      description,
-      category,
+      description: cleanDescription,
+      category: cleanCategory,
     });
+
+    setAmount('');
+    setDescription('');
+    setCategory('');
 
     Alert.alert('Gasto guardado', 'El gasto se registró correctamente.');
     router.push('/dashboard');

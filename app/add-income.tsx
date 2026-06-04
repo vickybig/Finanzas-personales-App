@@ -1,4 +1,4 @@
-import { addTransaction, transactions } from '@/data/transactions';
+import { addTransaction } from '@/data/transactions';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -16,14 +16,18 @@ export default function AddIncomeScreen() {
   const [category, setCategory] = useState('');
 
   async function handleSaveIncome() {
-    if (!amount || !description || !category) {
+    const cleanAmount = amount.trim();
+    const cleanDescription = description.trim();
+    const cleanCategory = category.trim();
+
+    if (!cleanAmount || !cleanDescription || !cleanCategory) {
       Alert.alert('Campos incompletos', 'Por favor completa todos los campos.');
       return;
     }
 
-    const numericAmount = Number(amount);
+    const numericAmount = Number(cleanAmount.replace(',', '.'));
 
-    if (numericAmount <= 0 || isNaN(numericAmount)) {
+    if (isNaN(numericAmount) || numericAmount <= 0) {
       Alert.alert('Monto inválido', 'Ingresa un monto válido mayor a 0.');
       return;
     }
@@ -32,9 +36,13 @@ export default function AddIncomeScreen() {
       id: Date.now(),
       type: 'income',
       amount: numericAmount,
-      description,
-      category,
+      description: cleanDescription,
+      category: cleanCategory,
     });
+
+    setAmount('');
+    setDescription('');
+    setCategory('');
 
     Alert.alert('Ingreso guardado', 'El ingreso se registró correctamente.');
     router.push('/dashboard');
