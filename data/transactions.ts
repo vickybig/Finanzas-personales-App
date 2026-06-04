@@ -54,6 +54,18 @@ export async function addTransaction(transaction: Transaction) {
   return updatedTransactions;
 }
 
+export async function deleteTransaction(id: number) {
+  const currentTransactions = await loadTransactions();
+
+  const updatedTransactions = currentTransactions.filter(
+    (transaction) => transaction.id !== id
+  );
+
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTransactions));
+
+  return updatedTransactions;
+}
+
 export function getTotalIncome(transactionList: Transaction[]) {
   return transactionList
     .filter((item) => item.type === 'income')
