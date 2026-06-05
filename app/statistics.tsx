@@ -1,7 +1,9 @@
 import { loadTransactions, Transaction } from '@/data/transactions';
+import { generateFinancialReportPdf } from '@/data/pdf-report';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
+  Alert,
   Dimensions,
   Pressable,
   ScrollView,
@@ -77,6 +79,17 @@ export default function StatisticsScreen() {
     }, [])
   );
 
+  async function handleExportPdf() {
+      try {
+        await generateFinancialReportPdf();
+      } catch {
+        Alert.alert(
+        'Error al generar PDF',
+          'No se pudo crear el reporte financiero. Intenta nuevamente.'
+        );
+      }
+    }
+
   const currentYear = new Date().getFullYear();
   const monthlyIncome = Array(12).fill(0);
   const monthlyExpense = Array(12).fill(0);
@@ -140,6 +153,9 @@ export default function StatisticsScreen() {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Estadísticas 📊</Text>
+      <Pressable style={styles.pdfButton} onPress={handleExportPdf}>
+        <Text style={styles.pdfButtonText}>Exportar PDF 📄</Text>
+      </Pressable>
 
       <View style={styles.summaryContainer}>
         <View style={styles.summaryCard}>
@@ -461,4 +477,17 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 16,
   },
+  pdfButton: {
+  backgroundColor: '#2563EB',
+  padding: 16,
+  borderRadius: 16,
+  alignItems: 'center',
+  marginBottom: 18,
+},
+
+pdfButtonText: {
+  color: '#FFFFFF',
+  fontWeight: 'bold',
+  fontSize: 16,
+},
 });
