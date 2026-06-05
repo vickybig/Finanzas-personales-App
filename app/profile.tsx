@@ -1,4 +1,5 @@
 import { getCurrentUser, logoutUser } from '@/data/auth';
+import { cancelAllReminders, scheduleDailyReminder } from '@/data/notifications';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -30,6 +31,31 @@ export default function ProfileScreen() {
         },
       },
     ]);
+  }
+
+  async function handleEnableNotifications() {
+    try {
+      await scheduleDailyReminder();
+
+      Alert.alert(
+        'Recordatorio activado 🔔',
+        'FinGo te recordará todos los días a las 8:00 PM revisar tus finanzas.'
+      );
+    } catch {
+      Alert.alert(
+        'Permiso requerido',
+        'Debes permitir notificaciones para activar los recordatorios.'
+      );
+    }
+  }
+
+  async function handleDisableNotifications() {
+    await cancelAllReminders();
+
+    Alert.alert(
+      'Recordatorios desactivados',
+      'Ya no recibirás avisos de FinGo.'
+    );
   }
 
   return (
@@ -81,6 +107,26 @@ export default function ProfileScreen() {
               : 'No disponible'}
           </Text>
         </View>
+      </View>
+
+      <View style={styles.infoCard}>
+        <Text style={styles.sectionTitle}>Notificaciones</Text>
+
+        <Pressable
+          style={styles.notificationButton}
+          onPress={handleEnableNotifications}
+        >
+          <Text style={styles.notificationButtonText}>
+            Activar recordatorio diario 🔔
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={styles.disableButton}
+          onPress={handleDisableNotifications}
+        >
+          <Text style={styles.disableButtonText}>Desactivar recordatorios</Text>
+        </Pressable>
       </View>
 
       <Pressable style={styles.logoutButton} onPress={handleLogout}>
@@ -180,6 +226,29 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     color: '#1E293B',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  notificationButton: {
+    backgroundColor: '#10B981',
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  notificationButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  disableButton: {
+    backgroundColor: '#F1F5F9',
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  disableButtonText: {
+    color: '#64748B',
     fontWeight: 'bold',
     fontSize: 16,
   },

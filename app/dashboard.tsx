@@ -19,6 +19,7 @@ const officialExpenseCategories = [
   'Restaurantes',
   'Salud',
   'Trabajo',
+  'Ahorro',
   'Otros',
 ];
 
@@ -59,6 +60,7 @@ function getCategoryIcon(type: Transaction['type'], category: string) {
     Restaurantes: '🍽️',
     Salud: '❤️',
     Trabajo: '💼',
+    Ahorro: '🎯',
     Otros: '📦',
   };
 
@@ -88,6 +90,9 @@ function formatDate(date: string) {
 
 export default function DashboardScreen() {
   const [transactionList, setTransactionList] = useState<Transaction[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<
+  'all' | 'income' | 'expense' | 'saving'
+ >('all');
   const [isLoading, setIsLoading] = useState(true);
 
   useFocusEffect(
@@ -125,6 +130,22 @@ export default function DashboardScreen() {
   const totalExpense = getTotalExpense(transactionList);
   const balance = getBalance(transactionList);
   const latestTransactions = [...transactionList].reverse();
+  const filteredTransactions = latestTransactions.filter((item) => {
+   if (selectedFilter === 'all') return true;
+
+   if (selectedFilter === 'income') {
+    return item.type === 'income';
+   }
+
+   if (selectedFilter === 'saving') {
+     return (item.type === 'expense' && item.category === 'Ahorro');
+   }
+
+    return (
+    item.type === 'expense' &&
+    item.category !== 'Ahorro'
+    );
+  });
 
   const savingsRate =
     totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
@@ -217,6 +238,48 @@ export default function DashboardScreen() {
         <Text style={styles.movementCount}>{latestTransactions.length} registros</Text>
       </View>
 
+      <View style={styles.filterContainer}>
+        <Pressable
+          style={[
+            styles.filterButton,
+            selectedFilter === 'all' && styles.activeFilter,
+          ]}
+          onPress={() => setSelectedFilter('all')}
+         >
+          <Text style={styles.filterText}>Todos</Text>
+       </Pressable>
+
+       <Pressable
+         style={[
+           styles.filterButton,
+           selectedFilter === 'income' && styles.activeFilter,
+          ]}
+          onPress={() => setSelectedFilter('income')}
+         >
+          <Text style={styles.filterText}>Ingresos</Text>
+       </Pressable>
+
+        <Pressable
+          style={[
+            styles.filterButton,
+            selectedFilter === 'expense' && styles.activeFilter,
+          ]} 
+          onPress={() => setSelectedFilter('expense')}
+         >
+          <Text style={styles.filterText}>Gastos</Text>
+       </Pressable>
+
+       <Pressable
+         style={[
+           styles.filterButton,
+           selectedFilter === 'saving' && styles.activeFilter,
+          ]}
+          onPress={() => setSelectedFilter('saving')}
+         >
+          <Text style={styles.filterText}>Ahorro</Text>
+       </Pressable>
+      </View>
+
       {latestTransactions.length === 0 ? (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyTitle}>Aún no hay movimientos</Text>
@@ -225,7 +288,7 @@ export default function DashboardScreen() {
           </Text>
         </View>
       ) : (
-        latestTransactions.map((item) => {
+        filteredTransactions.map((item) => {
           const normalizedCategory = normalizeCategory(item.type, item.category);
           const categoryIcon = getCategoryIcon(item.type, item.category);
           const isIncome = item.type === 'income';
@@ -507,6 +570,28 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontWeight: '700',
   },
+  filterContainer: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 8,
+  marginBottom: 14,
+},
+
+filterButton: {
+  backgroundColor: '#E2E8F0',
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  borderRadius: 12,
+},
+
+activeFilter: {
+  backgroundColor: '#2563EB',
+},
+
+filterText: {
+  color: '#1E293B',
+  fontWeight: 'bold',
+},
   profileButton: {
   width: 42,
   height: 42,

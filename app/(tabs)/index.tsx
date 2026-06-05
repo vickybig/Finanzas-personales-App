@@ -1,7 +1,23 @@
-import { Link } from 'expo-router';
+import { getCurrentUser } from '@/data/auth';
+import { Link, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
+  const router = useRouter();
+
+  useEffect(() => {
+    async function checkSession() {
+      const user = await getCurrentUser();
+
+      if (user) {
+        router.replace('/dashboard');
+      }
+    }
+
+    checkSession();
+  }, []);
+
   return (
     <View style={styles.container}>
       <Text style={styles.logo}>💰</Text>
