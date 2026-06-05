@@ -1,5 +1,8 @@
-import { Link } from 'expo-router';
+import { loginUser } from '@/data/auth';
+import { Link, useRouter } from 'expo-router';
+import { useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -11,6 +14,25 @@ import {
 } from 'react-native';
 
 export default function LoginScreen() {
+  const router = useRouter();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  async function handleLogin() {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Campos incompletos', 'Ingresa tu correo y contraseña.');
+      return;
+    }
+
+    try {
+      await loginUser(email, password);
+      router.replace('/dashboard');
+    } catch {
+      Alert.alert('Error al iniciar sesión', 'Correo o contraseña incorrectos.');
+    }
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.keyboardContainer}
@@ -38,6 +60,8 @@ export default function LoginScreen() {
             placeholder="ejemplo@correo.com"
             keyboardType="email-address"
             autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
           />
 
           <Text style={styles.label}>Contraseña</Text>
@@ -45,13 +69,13 @@ export default function LoginScreen() {
             style={styles.input}
             placeholder="Ingresa tu contraseña"
             secureTextEntry
+            value={password}
+            onChangeText={setPassword}
           />
 
-          <Link href="/dashboard" asChild>
-            <TouchableOpacity style={styles.primaryButton}>
-              <Text style={styles.primaryText}>Ingresar</Text>
-            </TouchableOpacity>
-          </Link>
+          <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
+            <Text style={styles.primaryText}>Ingresar</Text>
+          </TouchableOpacity>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>¿No tienes una cuenta?</Text>

@@ -1,5 +1,8 @@
-import { Link } from 'expo-router';
+import { registerUser } from '@/data/auth';
+import { Link, useRouter } from 'expo-router';
+import { useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -11,6 +14,43 @@ import {
 } from 'react-native';
 
 export default function RegisterScreen() {
+  const router = useRouter();
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  async function handleRegister() {
+    if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+      Alert.alert('Campos incompletos', 'Completa todos los campos.');
+      return;
+    }
+
+    if (!email.includes('@')) {
+      Alert.alert('Correo inválido', 'Ingresa un correo válido.');
+      return;
+    }
+
+    if (password.length < 4) {
+      Alert.alert('Contraseña débil', 'La contraseña debe tener al menos 4 caracteres.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Contraseñas diferentes', 'Las contraseñas no coinciden.');
+      return;
+    }
+
+    try {
+      await registerUser(name, email, password);
+      Alert.alert('Cuenta creada', 'Tu cuenta fue registrada correctamente.');
+      router.replace('/dashboard');
+    } catch {
+      Alert.alert('Error', 'Ya existe una cuenta con este correo.');
+    }
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.keyboardContainer}
@@ -36,6 +76,8 @@ export default function RegisterScreen() {
           <TextInput
             style={styles.input}
             placeholder="Ej: Victor Vicente"
+            value={name}
+            onChangeText={setName}
           />
 
           <Text style={styles.label}>Correo electrónico</Text>
@@ -44,6 +86,8 @@ export default function RegisterScreen() {
             placeholder="ejemplo@correo.com"
             keyboardType="email-address"
             autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
           />
 
           <Text style={styles.label}>Contraseña</Text>
@@ -51,6 +95,8 @@ export default function RegisterScreen() {
             style={styles.input}
             placeholder="Crea una contraseña"
             secureTextEntry
+            value={password}
+            onChangeText={setPassword}
           />
 
           <Text style={styles.label}>Confirmar contraseña</Text>
@@ -58,15 +104,17 @@ export default function RegisterScreen() {
             style={styles.input}
             placeholder="Repite tu contraseña"
             secureTextEntry
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
           />
 
-          <TouchableOpacity style={styles.primaryButton}>
+          <TouchableOpacity style={styles.primaryButton} onPress={handleRegister}>
             <Text style={styles.primaryText}>Registrarse</Text>
           </TouchableOpacity>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>¿Ya tienes una cuenta?</Text>
-            <Link href="/" style={styles.linkText}>
+            <Link href="/login" style={styles.linkText}>
               Iniciar sesión
             </Link>
           </View>

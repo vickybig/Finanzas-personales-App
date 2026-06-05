@@ -151,6 +151,12 @@ export default function DashboardScreen() {
           <Text style={styles.greeting}>Hola, Victor 👋</Text>
           <Text style={styles.dateText}>{currentDate}</Text>
         </View>
+
+        <Link href="/profile" asChild>
+          <Pressable style={styles.profileButton}>
+            <Text style={styles.profileIcon}>👤</Text>
+          </Pressable>
+       </Link>
       </View>
 
       <View style={styles.balanceCard}>
@@ -284,8 +290,11 @@ const styles = StyleSheet.create({
     paddingBottom: 35,
   },
   header: {
-    marginBottom: 20,
-  },
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 20,
+},
   appName: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -498,4 +507,17 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontWeight: '700',
   },
+  profileButton: {
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  backgroundColor: '#FFFFFF',
+  justifyContent: 'center',
+  alignItems: 'center',
+  elevation: 2,
+},
+
+profileIcon: {
+  fontSize: 20,
+},
 });
