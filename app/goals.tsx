@@ -6,10 +6,11 @@ import {
   loadGoals,
   updateGoal,
 } from '@/data/goals';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   Alert,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -19,10 +20,16 @@ import {
 } from 'react-native';
 
 export default function GoalsScreen() {
+  const router = useRouter();
+
   const [goals, setGoals] = useState<Goal[]>([]);
   const [title, setTitle] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
   const [currentAmount, setCurrentAmount] = useState('');
+
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+  const [savingAmount, setSavingAmount] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -35,31 +42,34 @@ export default function GoalsScreen() {
     }, [])
   );
 
+  function resetForm() {
+    setTitle('');
+    setTargetAmount('');
+    setCurrentAmount('');
+  }
+
   async function handleAddGoal() {
     const cleanTitle = title.trim();
     const numericTarget = Number(targetAmount.trim().replace(',', '.'));
     const numericCurrent = Number(currentAmount.trim().replace(',', '.'));
 
     if (!cleanTitle || !targetAmount || !currentAmount) {
-      Alert.alert('Campos incompletos', 'Completa todos los campos de la meta.');
+      Alert.alert('Campos incompletos', 'Completa todos los campos.');
       return;
     }
 
     if (isNaN(numericTarget) || numericTarget <= 0) {
-      Alert.alert('Monto objetivo inválido', 'Ingresa un objetivo mayor a 0.');
+      Alert.alert('Monto inválido', 'El objetivo debe ser mayor a 0.');
       return;
     }
 
     if (isNaN(numericCurrent) || numericCurrent < 0) {
-      Alert.alert('Monto ahorrado inválido', 'Ingresa un monto válido.');
+      Alert.alert('Monto inválido', 'El ahorro actual debe ser válido.');
       return;
     }
 
     if (numericCurrent > numericTarget) {
-      Alert.alert(
-        'Revisa los montos',
-        'El monto ahorrado no puede ser mayor al monto objetivo.'
-      );
+      Alert.alert('Revisa los montos', 'El ahorro no puede superar el objetivo.');
       return;
     }
 
@@ -73,18 +83,59 @@ export default function GoalsScreen() {
       });
 
       setGoals(updatedGoals);
-      setTitle('');
-      setTargetAmount('');
-      setCurrentAmount('');
-
-      Alert.alert('Meta creada', 'Tu meta de ahorro se registró correctamente.');
-    } catch (error) {
-      Alert.alert('Límite de metas', 'Solo puedes registrar hasta 3 metas de ahorro.');
+      resetForm();
+      Alert.alert('Meta creada 🎯', 'Tu meta fue registrada correctamente.');
+    } catch {
+      Alert.alert('Límite alcanzado', 'Solo puedes registrar hasta 3 metas.');
     }
   }
 
+  function openSavingModal(goal: Goal) {
+    setSelectedGoal(goal);
+    setSavingAmount('');
+    setModalVisible(true);
+  }
+
+  async function handleSaveProgress() {
+    if (!selectedGoal) return;
+
+    const amount = Number(savingAmount.trim().replace(',', '.'));
+
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert('Monto inválido', 'Ingresa un monto mayor a 0.');
+      return;
+    }
+
+    const newAmount = selectedGoal.currentAmount + amount;
+
+    if (newAmount > selectedGoal.targetAmount) {
+      Alert.alert('Meta excedida', 'El ahorro no puede superar el objetivo.');
+      return;
+    }
+
+    const updatedGoals = await updateGoal({
+      ...selectedGoal,
+      currentAmount: newAmount,
+    });
+
+    setGoals(updatedGoals);
+    setModalVisible(false);
+    setSelectedGoal(null);
+    setSavingAmount('');
+  }
+
+  async function handleCompleteGoal(goal: Goal) {
+    const updatedGoals = await updateGoal({
+      ...goal,
+      currentAmount: goal.targetAmount,
+    });
+
+    setGoals(updatedGoals);
+    Alert.alert('¡Meta completada! 🏆', `Completaste: ${goal.title}`);
+  }
+
   async function handleDeleteGoal(id: number) {
-    Alert.alert('Eliminar meta', '¿Deseas eliminar esta meta de ahorro?', [
+    Alert.alert('Eliminar meta', '¿Seguro que deseas eliminar esta meta?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Eliminar',
@@ -97,84 +148,57 @@ export default function GoalsScreen() {
     ]);
   }
 
-  async function handleIncreaseGoal(goal: Goal) {
-    Alert.prompt(
-      'Agregar ahorro',
-      `¿Cuánto deseas agregar a "${goal.title}"?`,
-      async (value) => {
-        const amountToAdd = Number(value?.trim().replace(',', '.'));
-
-        if (isNaN(amountToAdd) || amountToAdd <= 0) {
-          Alert.alert('Monto inválido', 'Ingresa un monto válido mayor a 0.');
-          return;
-        }
-
-        const newCurrentAmount = goal.currentAmount + amountToAdd;
-
-        if (newCurrentAmount > goal.targetAmount) {
-          Alert.alert(
-            'Meta excedida',
-            'El ahorro acumulado no puede superar el monto objetivo.'
-          );
-          return;
-        }
-
-        const updatedGoals = await updateGoal({
-          ...goal,
-          currentAmount: newCurrentAmount,
-        });
-
-        setGoals(updatedGoals);
-      },
-      'plain-text'
-    );
-  }
-
   const totalSaved = goals.reduce((total, goal) => total + goal.currentAmount, 0);
   const totalTarget = goals.reduce((total, goal) => total + goal.targetAmount, 0);
   const generalProgress =
     totalTarget > 0 ? Math.min((totalSaved / totalTarget) * 100, 100) : 0;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Pressable onPress={() => router.back()}>
+        <Text style={styles.backText}>← Volver</Text>
+      </Pressable>
+
       <Text style={styles.appName}>FinGo</Text>
-      <Text style={styles.title}>Metas de ahorro 🎯</Text>
+      <Text style={styles.title}>Mis Metas 🎯</Text>
       <Text style={styles.subtitle}>
-        Planifica tus objetivos y registra manualmente tu avance.
+        Organiza tus objetivos financieros y controla cuánto te falta para cumplirlos.
       </Text>
 
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Ahorro total en metas</Text>
-        <Text style={styles.summaryAmount}>${totalSaved.toFixed(2)}</Text>
+      <View style={styles.heroCard}>
+        <Text style={styles.heroLabel}>Ahorro total en metas</Text>
+        <Text style={styles.heroAmount}>${totalSaved.toFixed(2)}</Text>
 
-        <View style={styles.summaryFooter}>
-          <Text style={styles.summaryFooterText}>
-            Progreso general: {generalProgress.toFixed(1)}%
-          </Text>
+        <View style={styles.heroProgressBackground}>
+          <View style={[styles.heroProgressFill, { width: `${generalProgress}%` }]} />
         </View>
+
+        <Text style={styles.heroFooter}>
+          Progreso general: {generalProgress.toFixed(1)}%
+        </Text>
       </View>
 
-      <View style={styles.summaryContainer}>
-        <View style={styles.smallCard}>
-          <Text style={styles.smallIcon}>🎯</Text>
-          <Text style={styles.smallLabel}>Metas</Text>
-          <Text style={styles.smallValue}>{goals.length}/3</Text>
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Text style={styles.statIcon}>🎯</Text>
+          <Text style={styles.statLabel}>Metas</Text>
+          <Text style={styles.statValue}>{goals.length}/3</Text>
         </View>
 
-        <View style={styles.smallCard}>
-          <Text style={styles.smallIcon}>💰</Text>
-          <Text style={styles.smallLabel}>Objetivo</Text>
-          <Text style={styles.smallValue}>${totalTarget.toFixed(2)}</Text>
+        <View style={styles.statCard}>
+          <Text style={styles.statIcon}>💵</Text>
+          <Text style={styles.statLabel}>Objetivo total</Text>
+          <Text style={styles.statValue}>${totalTarget.toFixed(2)}</Text>
         </View>
       </View>
 
       <View style={styles.formCard}>
-        <Text style={styles.formTitle}>Crear nueva meta</Text>
+        <Text style={styles.formTitle}>Nueva meta</Text>
 
-        <Text style={styles.label}>Nombre de la meta</Text>
+        <Text style={styles.label}>Nombre</Text>
         <TextInput
           style={styles.input}
-          placeholder="Ej: Laptop, viaje, emergencia"
+          placeholder="Ej: Moto, laptop, viaje"
           value={title}
           onChangeText={setTitle}
         />
@@ -182,16 +206,16 @@ export default function GoalsScreen() {
         <Text style={styles.label}>Monto objetivo</Text>
         <TextInput
           style={styles.input}
-          placeholder="$ 0.00"
+          placeholder="Ej: 500"
           keyboardType="numeric"
           value={targetAmount}
           onChangeText={setTargetAmount}
         />
 
-        <Text style={styles.label}>Monto ahorrado actual</Text>
+        <Text style={styles.label}>Ahorro actual</Text>
         <TextInput
           style={styles.input}
-          placeholder="$ 0.00"
+          placeholder="Ej: 100"
           keyboardType="numeric"
           value={currentAmount}
           onChangeText={setCurrentAmount}
@@ -200,62 +224,94 @@ export default function GoalsScreen() {
         <Pressable
           style={[
             styles.primaryButton,
-            goals.length >= 3 && styles.primaryButtonDisabled,
+            goals.length >= 3 && styles.disabledButton,
           ]}
           onPress={handleAddGoal}
           disabled={goals.length >= 3}
         >
           <Text style={styles.primaryButtonText}>
-            {goals.length >= 3 ? 'Límite de 3 metas alcanzado' : 'Crear meta'}
+            {goals.length >= 3 ? 'Límite de metas alcanzado' : 'Crear meta'}
           </Text>
         </Pressable>
       </View>
 
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Mis metas</Text>
-        <Text style={styles.goalCounter}>{goals.length} registros</Text>
+        <Text style={styles.sectionTitle}>Lista de metas</Text>
+        <Text style={styles.counter}>{goals.length} registros</Text>
       </View>
 
       {goals.length === 0 ? (
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyIcon}>🎯</Text>
+          <Text style={styles.emptyIcon}>📌</Text>
           <Text style={styles.emptyTitle}>Aún no tienes metas</Text>
           <Text style={styles.emptyText}>
-            Crea tu primera meta para empezar a medir tu progreso financiero.
+            Crea una meta para empezar a planificar tu ahorro.
           </Text>
         </View>
       ) : (
         goals.map((goal) => {
           const progress = getGoalProgress(goal);
+          const missingAmount = goal.targetAmount - goal.currentAmount;
+          const isCompleted = progress >= 100;
 
           return (
             <View key={goal.id} style={styles.goalCard}>
               <View style={styles.goalHeader}>
                 <View style={styles.goalIconBox}>
-                  <Text style={styles.goalIcon}>🎯</Text>
+                  <Text style={styles.goalIcon}>{isCompleted ? '🏆' : '🎯'}</Text>
                 </View>
 
                 <View style={styles.goalInfo}>
                   <Text style={styles.goalTitle}>{goal.title}</Text>
-                  <Text style={styles.goalAmount}>
-                    ${goal.currentAmount.toFixed(2)} / ${goal.targetAmount.toFixed(2)}
+                  <Text style={styles.goalSubtitle}>
+                    ${goal.currentAmount.toFixed(2)} de ${goal.targetAmount.toFixed(2)}
                   </Text>
                 </View>
 
-                <Text style={styles.goalPercentage}>{progress.toFixed(0)}%</Text>
+                <Text
+                  style={[
+                    styles.goalPercent,
+                    isCompleted && styles.completedPercent,
+                  ]}
+                >
+                  {progress.toFixed(0)}%
+                </Text>
               </View>
 
               <View style={styles.progressBackground}>
-                <View style={[styles.progressFill, { width: `${progress}%` }]} />
+                <View
+                  style={[
+                    styles.progressFill,
+                    isCompleted && styles.completedFill,
+                    { width: `${progress}%` },
+                  ]}
+                />
               </View>
 
-              <View style={styles.goalActions}>
-                <Pressable
-                  style={styles.addSavingButton}
-                  onPress={() => handleIncreaseGoal(goal)}
-                >
-                  <Text style={styles.addSavingText}>Agregar ahorro</Text>
-                </Pressable>
+              <Text style={styles.missingText}>
+                {isCompleted
+                  ? 'Meta completada ✅'
+                  : `Faltan $${missingAmount.toFixed(2)} para cumplirla`}
+              </Text>
+
+              <View style={styles.actionsRow}>
+                {!isCompleted && (
+                  <>
+                    <Pressable
+                      style={styles.addButton}
+                      onPress={() => openSavingModal(goal)}
+                    >
+                      <Text style={styles.addButtonText}>Agregar ahorro</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={styles.completeButton}
+                      onPress={() => handleCompleteGoal(goal)}
+                    >
+                      <Text style={styles.completeButtonText}>Completar</Text>
+                    </Pressable>
+                  </>
+                )}
 
                 <Pressable onPress={() => handleDeleteGoal(goal.id)}>
                   <Text style={styles.deleteText}>Eliminar</Text>
@@ -265,6 +321,36 @@ export default function GoalsScreen() {
           );
         })
       )}
+
+      <Modal transparent visible={modalVisible} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Agregar ahorro</Text>
+            <Text style={styles.modalSubtitle}>
+              {selectedGoal ? selectedGoal.title : ''}
+            </Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Ej: 20"
+              keyboardType="numeric"
+              value={savingAmount}
+              onChangeText={setSavingAmount}
+            />
+
+            <Pressable style={styles.primaryButton} onPress={handleSaveProgress}>
+              <Text style={styles.primaryButtonText}>Guardar avance</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.cancelButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancelar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -274,99 +360,112 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F4F7FB',
   },
-  contentContainer: {
+  content: {
     padding: 20,
-    paddingTop: 60,
-    paddingBottom: 35,
+    paddingTop: 55,
+    paddingBottom: 40,
+  },
+  backText: {
+    color: '#2563EB',
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 14,
   },
   appName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#10B981',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   title: {
-    fontSize: 30,
+    fontSize: 34,
     fontWeight: 'bold',
     color: '#1E293B',
-    marginBottom: 6,
   },
   subtitle: {
     color: '#64748B',
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: 20,
+    fontSize: 16,
+    lineHeight: 23,
+    marginTop: 8,
+    marginBottom: 22,
   },
-  summaryCard: {
+  heroCard: {
     backgroundColor: '#2563EB',
-    borderRadius: 24,
+    borderRadius: 26,
     padding: 24,
     marginBottom: 18,
   },
-  summaryLabel: {
+  heroLabel: {
     color: '#DBEAFE',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  summaryAmount: {
+  heroAmount: {
     color: '#FFFFFF',
-    fontSize: 38,
+    fontSize: 42,
     fontWeight: 'bold',
     marginTop: 10,
   },
-  summaryFooter: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    padding: 10,
-    borderRadius: 14,
+  heroProgressBackground: {
+    height: 12,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderRadius: 999,
     marginTop: 18,
+    overflow: 'hidden',
   },
-  summaryFooterText: {
+  heroProgressFill: {
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+  },
+  heroFooter: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: 'bold',
+    marginTop: 12,
   },
-  summaryContainer: {
+  statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 18,
   },
-  smallCard: {
+  statCard: {
     backgroundColor: '#FFFFFF',
     width: '48%',
-    padding: 16,
-    borderRadius: 18,
+    padding: 18,
+    borderRadius: 20,
     elevation: 2,
   },
-  smallIcon: {
-    fontSize: 22,
+  statIcon: {
+    fontSize: 24,
     marginBottom: 8,
   },
-  smallLabel: {
+  statLabel: {
     color: '#64748B',
-    fontWeight: '600',
-    marginBottom: 8,
+    fontWeight: '700',
   },
-  smallValue: {
+  statValue: {
     color: '#1E293B',
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 19,
+    marginTop: 6,
   },
   formCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 18,
-    marginBottom: 24,
+    marginBottom: 25,
     elevation: 2,
   },
   formTitle: {
-    fontSize: 21,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#1E293B',
     marginBottom: 16,
   },
   label: {
-    fontSize: 15,
-    fontWeight: '700',
     color: '#0F172A',
+    fontWeight: 'bold',
+    fontSize: 15,
     marginBottom: 8,
   },
   input: {
@@ -383,9 +482,8 @@ const styles = StyleSheet.create({
     padding: 17,
     borderRadius: 16,
     alignItems: 'center',
-    marginTop: 4,
   },
-  primaryButtonDisabled: {
+  disabledButton: {
     backgroundColor: '#94A3B8',
   },
   primaryButtonText: {
@@ -396,46 +494,44 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 14,
+    alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 23,
     fontWeight: 'bold',
     color: '#1E293B',
   },
-  goalCounter: {
+  counter: {
     color: '#64748B',
-    fontWeight: '700',
+    fontWeight: 'bold',
   },
   emptyCard: {
     backgroundColor: '#FFFFFF',
-    padding: 22,
-    borderRadius: 18,
+    padding: 24,
+    borderRadius: 20,
     alignItems: 'center',
-    elevation: 1,
   },
   emptyIcon: {
-    fontSize: 34,
-    marginBottom: 8,
+    fontSize: 36,
+    marginBottom: 10,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: 'bold',
     color: '#1E293B',
-    marginBottom: 8,
   },
   emptyText: {
     color: '#64748B',
-    fontSize: 15,
     textAlign: 'center',
+    marginTop: 8,
     lineHeight: 22,
   },
   goalCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 18,
-    marginBottom: 14,
+    marginBottom: 15,
     elevation: 2,
   },
   goalHeader: {
@@ -444,37 +540,40 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   goalIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   goalIcon: {
-    fontSize: 22,
+    fontSize: 24,
   },
   goalInfo: {
     flex: 1,
   },
   goalTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1E293B',
   },
-  goalAmount: {
+  goalSubtitle: {
     color: '#64748B',
     fontWeight: '600',
     marginTop: 4,
   },
-  goalPercentage: {
-    fontSize: 22,
+  goalPercent: {
+    fontSize: 23,
     fontWeight: 'bold',
     color: '#10B981',
   },
+  completedPercent: {
+    color: '#F59E0B',
+  },
   progressBackground: {
-    height: 10,
+    height: 11,
     backgroundColor: '#E2E8F0',
     borderRadius: 999,
     overflow: 'hidden',
@@ -484,25 +583,75 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981',
     borderRadius: 999,
   },
-  goalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    marginTop: 14,
-    gap: 14,
+  completedFill: {
+    backgroundColor: '#F59E0B',
   },
-  addSavingButton: {
+  missingText: {
+    color: '#64748B',
+    fontWeight: '700',
+    marginTop: 12,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: 15,
+    flexWrap: 'wrap',
+  },
+  addButton: {
     backgroundColor: '#DCFCE7',
     paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 13,
     borderRadius: 12,
   },
-  addSavingText: {
+  addButtonText: {
     color: '#16A34A',
+    fontWeight: 'bold',
+  },
+  completeButton: {
+    backgroundColor: '#FEF3C7',
+    paddingVertical: 10,
+    paddingHorizontal: 13,
+    borderRadius: 12,
+  },
+  completeButtonText: {
+    color: '#D97706',
     fontWeight: 'bold',
   },
   deleteText: {
     color: '#DC2626',
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15,23,42,0.45)',
+    justifyContent: 'center',
+    padding: 22,
+  },
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 22,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1E293B',
+  },
+  modalSubtitle: {
+    color: '#64748B',
+    fontWeight: '700',
+    marginTop: 6,
+    marginBottom: 16,
+  },
+  cancelButton: {
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  cancelButtonText: {
+    color: '#64748B',
     fontWeight: 'bold',
   },
 });
