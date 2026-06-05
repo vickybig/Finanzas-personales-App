@@ -6,6 +6,12 @@ import {
   loadGoals,
   updateGoal,
 } from '@/data/goals';
+import {
+  addTransaction,
+  getBalance,
+  loadTransactions,
+  Transaction,
+} from '@/data/transactions';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
@@ -23,9 +29,10 @@ export default function GoalsScreen() {
   const router = useRouter();
 
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [availableBalance, setAvailableBalance] = useState(0);
+
   const [title, setTitle] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
-  const [currentAmount, setCurrentAmount] = useState('');
 
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [savingAmount, setSavingAmount] = useState('');
@@ -35,7 +42,10 @@ export default function GoalsScreen() {
     useCallback(() => {
       async function loadData() {
         const savedGoals = await loadGoals();
+        const savedTransactions = await loadTransactions();
+
         setGoals(savedGoals);
+        setAvailableBalance(getBalance(savedTransactions));
       }
 
       loadData();
@@ -45,16 +55,14 @@ export default function GoalsScreen() {
   function resetForm() {
     setTitle('');
     setTargetAmount('');
-    setCurrentAmount('');
   }
 
   async function handleAddGoal() {
     const cleanTitle = title.trim();
     const numericTarget = Number(targetAmount.trim().replace(',', '.'));
-    const numericCurrent = Number(currentAmount.trim().replace(',', '.'));
 
-    if (!cleanTitle || !targetAmount || !currentAmount) {
-      Alert.alert('Campos incompletos', 'Completa todos los campos.');
+    if (!cleanTitle || !targetAmount) {
+      Alert.alert('Campos incompletos', 'Completa el nombre y monto objetivo.');
       return;
     }
 
@@ -63,22 +71,12 @@ export default function GoalsScreen() {
       return;
     }
 
-    if (isNaN(numericCurrent) || numericCurrent < 0) {
-      Alert.alert('Monto inválido', 'El ahorro actual debe ser válido.');
-      return;
-    }
-
-    if (numericCurrent > numericTarget) {
-      Alert.alert('Revisa los montos', 'El ahorro no puede superar el objetivo.');
-      return;
-    }
-
     try {
       const updatedGoals = await addGoal({
         id: Date.now(),
         title: cleanTitle,
         targetAmount: numericTarget,
-        currentAmount: numericCurrent,
+        currentAmount: 0,
         createdAt: new Date().toISOString(),
       });
 
@@ -106,6 +104,14 @@ export default function GoalsScreen() {
       return;
     }
 
+    if (amount > availableBalance) {
+      Alert.alert(
+        'Saldo insuficiente',
+        `No puedes ahorrar $${amount.toFixed(2)} porque tu saldo disponible es $${availableBalance.toFixed(2)}.`
+      );
+      return;
+    }
+
     const newAmount = selectedGoal.currentAmount + amount;
 
     if (newAmount > selectedGoal.targetAmount) {
@@ -113,39 +119,92 @@ export default function GoalsScreen() {
       return;
     }
 
+    const goalTransaction: Transaction = {
+      id: Date.now(),
+      type: 'expense',
+      amount,
+      description: `Meta de ahorro - ${selectedGoal.title}`,
+      category: 'Ahorro',
+      date: new Date().toISOString(),
+    };
+
+    await addTransaction(goalTransaction);
+
     const updatedGoals = await updateGoal({
       ...selectedGoal,
       currentAmount: newAmount,
     });
 
+    const updatedTransactions = await loadTransactions();
+
     setGoals(updatedGoals);
+    setAvailableBalance(getBalance(updatedTransactions));
     setModalVisible(false);
     setSelectedGoal(null);
     setSavingAmount('');
+
+    Alert.alert(
+      'Ahorro registrado 🎯',
+      `Se descontaron $${amount.toFixed(2)} de tu saldo y se agregó al historial.`
+    );
   }
 
   async function handleCompleteGoal(goal: Goal) {
+    const amountToComplete = goal.targetAmount - goal.currentAmount;
+
+    if (amountToComplete <= 0) {
+      Alert.alert('Meta completada', 'Esta meta ya está completa.');
+      return;
+    }
+
+    if (amountToComplete > availableBalance) {
+      Alert.alert(
+        'Saldo insuficiente',
+        `Necesitas $${amountToComplete.toFixed(2)} para completar esta meta, pero tu saldo disponible es $${availableBalance.toFixed(2)}.`
+      );
+      return;
+    }
+
+    const goalTransaction: Transaction = {
+      id: Date.now(),
+      type: 'expense',
+      amount: amountToComplete,
+      description: `Meta de ahorro - ${goal.title}`,
+      category: 'Ahorro',
+      date: new Date().toISOString(),
+    };
+
+    await addTransaction(goalTransaction);
+
     const updatedGoals = await updateGoal({
       ...goal,
       currentAmount: goal.targetAmount,
     });
 
+    const updatedTransactions = await loadTransactions();
+
     setGoals(updatedGoals);
+    setAvailableBalance(getBalance(updatedTransactions));
+
     Alert.alert('¡Meta completada! 🏆', `Completaste: ${goal.title}`);
   }
 
   async function handleDeleteGoal(id: number) {
-    Alert.alert('Eliminar meta', '¿Seguro que deseas eliminar esta meta?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar',
-        style: 'destructive',
-        onPress: async () => {
-          const updatedGoals = await deleteGoal(id);
-          setGoals(updatedGoals);
+    Alert.alert(
+      'Eliminar meta',
+      '¿Seguro que deseas eliminar esta meta? El dinero ahorrado no volverá automáticamente al saldo.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            const updatedGoals = await deleteGoal(id);
+            setGoals(updatedGoals);
+          },
         },
-      },
-    ]);
+      ]
+    );
   }
 
   const totalSaved = goals.reduce((total, goal) => total + goal.currentAmount, 0);
@@ -162,7 +221,7 @@ export default function GoalsScreen() {
       <Text style={styles.appName}>FinGo</Text>
       <Text style={styles.title}>Mis Metas 🎯</Text>
       <Text style={styles.subtitle}>
-        Organiza tus objetivos financieros y controla cuánto te falta para cumplirlos.
+        Organiza tus objetivos financieros. Cada ahorro se descuenta de tu saldo y aparece en el historial.
       </Text>
 
       <View style={styles.heroCard}>
@@ -175,6 +234,10 @@ export default function GoalsScreen() {
 
         <Text style={styles.heroFooter}>
           Progreso general: {generalProgress.toFixed(1)}%
+        </Text>
+
+        <Text style={styles.heroFooter}>
+          Saldo disponible: ${availableBalance.toFixed(2)}
         </Text>
       </View>
 
@@ -212,14 +275,9 @@ export default function GoalsScreen() {
           onChangeText={setTargetAmount}
         />
 
-        <Text style={styles.label}>Ahorro actual</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ej: 100"
-          keyboardType="numeric"
-          value={currentAmount}
-          onChangeText={setCurrentAmount}
-        />
+        <Text style={styles.helperText}>
+          Las metas empiezan en $0. Luego puedes agregar ahorro desde tu saldo disponible.
+        </Text>
 
         <Pressable
           style={[
@@ -330,6 +388,10 @@ export default function GoalsScreen() {
               {selectedGoal ? selectedGoal.title : ''}
             </Text>
 
+            <Text style={styles.balanceText}>
+              Saldo disponible: ${availableBalance.toFixed(2)}
+            </Text>
+
             <TextInput
               style={styles.input}
               placeholder="Ej: 20"
@@ -421,7 +483,7 @@ const styles = StyleSheet.create({
   heroFooter: {
     color: '#FFFFFF',
     fontWeight: 'bold',
-    marginTop: 12,
+    marginTop: 10,
   },
   statsRow: {
     flexDirection: 'row',
@@ -475,6 +537,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 15,
     fontSize: 16,
+    marginBottom: 14,
+  },
+  helperText: {
+    color: '#64748B',
+    fontSize: 14,
+    lineHeight: 20,
     marginBottom: 14,
   },
   primaryButton: {
@@ -643,7 +711,12 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontWeight: '700',
     marginTop: 6,
-    marginBottom: 16,
+    marginBottom: 10,
+  },
+  balanceText: {
+    color: '#2563EB',
+    fontWeight: 'bold',
+    marginBottom: 12,
   },
   cancelButton: {
     padding: 15,
