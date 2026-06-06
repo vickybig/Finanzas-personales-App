@@ -1,23 +1,97 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCurrentUser, logoutUser } from '@/data/auth';
 import { cancelAllReminders, scheduleDailyReminder } from '@/data/notifications';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 export default function ProfileScreen() {
   const router = useRouter();
+
   const [user, setUser] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [editedEmail, setEditedEmail] = useState('');
 
   useFocusEffect(
     useCallback(() => {
       async function loadUser() {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
+
+        if (currentUser) {
+          setEditedName(currentUser.name || '');
+          setEditedEmail(currentUser.email || '');
+        }
       }
 
       loadUser();
     }, [])
   );
+
+  async function updateUserInStorage(updatedUser: any) {
+    const keys = await AsyncStorage.getAllKeys();
+
+    for (const key of keys) {
+      const value = await AsyncStorage.getItem(key);
+
+      if (!value) continue;
+
+      try {
+        const parsed = JSON.parse(value);
+
+        if (Array.isArray(parsed)) {
+          const updatedArray = parsed.map((item) =>
+            item?.email === user.email ? { ...item, ...updatedUser } : item
+          );
+
+          await AsyncStorage.setItem(key, JSON.stringify(updatedArray));
+        }
+
+        if (parsed?.email === user.email) {
+          await AsyncStorage.setItem(
+            key,
+            JSON.stringify({ ...parsed, ...updatedUser })
+          );
+        }
+      } catch {
+        // Ignora valores que no sean JSON
+      }
+    }
+  }
+
+  async function handleSaveProfile() {
+    if (!editedName.trim() || !editedEmail.trim()) {
+      Alert.alert('Campos incompletos', 'Debes ingresar nombre y correo.');
+      return;
+    }
+
+    const updatedUser = {
+      ...user,
+      name: editedName.trim(),
+      email: editedEmail.trim(),
+    };
+
+    await updateUserInStorage(updatedUser);
+    setUser(updatedUser);
+    setIsEditing(false);
+
+    Alert.alert('Perfil actualizado ✅', 'Tus datos fueron guardados correctamente.');
+  }
+
+  function handleCancelEdit() {
+    setEditedName(user?.name || '');
+    setEditedEmail(user?.email || '');
+    setIsEditing(false);
+  }
 
   async function handleLogout() {
     Alert.alert('Cerrar sesión', '¿Seguro que deseas salir de tu cuenta?', [
@@ -82,31 +156,71 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.infoCard}>
-        <Text style={styles.sectionTitle}>Datos de cuenta</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Datos de cuenta</Text>
 
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Nombre</Text>
-          <Text style={styles.infoValue}>{user?.name || 'No registrado'}</Text>
+          {!isEditing && (
+            <Pressable onPress={() => setIsEditing(true)}>
+              <Text style={styles.editText}>Editar</Text>
+            </Pressable>
+          )}
         </View>
 
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Correo</Text>
-          <Text style={styles.infoValue}>{user?.email || 'No registrado'}</Text>
-        </View>
+        {isEditing ? (
+          <>
+            <Text style={styles.inputLabel}>Nombre</Text>
+            <TextInput
+              style={styles.input}
+              value={editedName}
+              onChangeText={setEditedName}
+              placeholder="Ingresa tu nombre"
+            />
 
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Moneda</Text>
-          <Text style={styles.infoValue}>USD ($)</Text>
-        </View>
+            <Text style={styles.inputLabel}>Correo</Text>
+            <TextInput
+              style={styles.input}
+              value={editedEmail}
+              onChangeText={setEditedEmail}
+              placeholder="Ingresa tu correo"
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
 
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Cuenta creada</Text>
-          <Text style={styles.infoValue}>
-            {user?.createdAt
-              ? new Date(user.createdAt).toLocaleDateString('es-EC')
-              : 'No disponible'}
-          </Text>
-        </View>
+            <Pressable style={styles.saveButton} onPress={handleSaveProfile}>
+              <Text style={styles.saveButtonText}>Guardar cambios</Text>
+            </Pressable>
+
+            <Pressable style={styles.cancelButton} onPress={handleCancelEdit}>
+              <Text style={styles.cancelButtonText}>Cancelar</Text>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Nombre</Text>
+              <Text style={styles.infoValue}>{user?.name || 'No registrado'}</Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Correo</Text>
+              <Text style={styles.infoValue}>{user?.email || 'No registrado'}</Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Moneda</Text>
+              <Text style={styles.infoValue}>USD ($)</Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Cuenta creada</Text>
+              <Text style={styles.infoValue}>
+                {user?.createdAt
+                  ? new Date(user.createdAt).toLocaleDateString('es-EC')
+                  : 'No disponible'}
+              </Text>
+            </View>
+          </>
+        )}
       </View>
 
       <View style={styles.infoCard}>
@@ -208,10 +322,21 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     elevation: 2,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   sectionTitle: {
     fontSize: 21,
     fontWeight: 'bold',
     color: '#1E293B',
+    marginBottom: 16,
+  },
+  editText: {
+    color: '#2563EB',
+    fontWeight: 'bold',
+    fontSize: 16,
     marginBottom: 16,
   },
   infoRow: {
@@ -226,6 +351,45 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     color: '#1E293B',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  inputLabel: {
+    color: '#64748B',
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  input: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 14,
+    padding: 14,
+    fontSize: 16,
+    marginBottom: 14,
+    color: '#1E293B',
+  },
+  saveButton: {
+    backgroundColor: '#2563EB',
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  cancelButton: {
+    backgroundColor: '#F1F5F9',
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  cancelButtonText: {
+    color: '#64748B',
     fontWeight: 'bold',
     fontSize: 16,
   },

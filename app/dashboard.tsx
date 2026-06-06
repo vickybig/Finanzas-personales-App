@@ -1,3 +1,6 @@
+import { getCurrentUser, User } from '@/data/auth';
+
+
 import {
   deleteTransaction,
   getBalance,
@@ -89,7 +92,9 @@ function formatDate(date: string) {
 }
 
 export default function DashboardScreen() {
+  const [user, setUser] = useState<User | null>(null);
   const [transactionList, setTransactionList] = useState<Transaction[]>([]);
+  
   const [selectedFilter, setSelectedFilter] = useState<
   'all' | 'income' | 'expense' | 'saving'
  >('all');
@@ -99,6 +104,8 @@ export default function DashboardScreen() {
     useCallback(() => {
       async function loadData() {
         setIsLoading(true);
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
         const savedTransactions = await loadTransactions();
         setTransactionList(savedTransactions || []);
         setIsLoading(false);
@@ -169,7 +176,9 @@ export default function DashboardScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.appName}>FinGo</Text>
-          <Text style={styles.greeting}>Hola, Victor 👋</Text>
+          <Text style={styles.greeting}>
+            Hola, {user?.name?.split(' ')[0] || 'Usuario'} 👋
+          </Text>
           <Text style={styles.dateText}>{currentDate}</Text>
         </View>
 
