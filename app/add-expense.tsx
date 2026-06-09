@@ -67,8 +67,13 @@ export default function AddExpenseScreen() {
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
     >
+      <TouchableOpacity onPress={() => router.back()}>
+        <Text style={styles.backText}>← Volver</Text>
+      </TouchableOpacity>
+
       <Text style={styles.appName}>FINGO</Text>
       <Text style={styles.title}>Registrar Gasto</Text>
+      
 
       <Text style={styles.label}>Monto</Text>
       <TextInput
@@ -137,7 +142,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
     padding: 24,
-    paddingTop: 100,
+    paddingTop: 55,
   },
   appName: {
     fontSize: 16,
@@ -231,4 +236,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  backText: {
+  color: '#2563EB',
+  fontWeight: 'bold',
+  fontSize: 16,
+  marginBottom: 14,
+},
 });

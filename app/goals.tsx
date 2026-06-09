@@ -1,11 +1,14 @@
 import {
   addGoal,
   deleteGoal,
+  getDaysRemaining,
   getGoalProgress,
+  getGoalStatusText,
   Goal,
   loadGoals,
   updateGoal,
 } from '@/data/goals';
+
 import {
   addTransaction,
   getBalance,
@@ -33,6 +36,7 @@ export default function GoalsScreen() {
 
   const [title, setTitle] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
+  const [targetDate, setTargetDate] = useState('');
 
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [savingAmount, setSavingAmount] = useState('');
@@ -55,14 +59,15 @@ export default function GoalsScreen() {
   function resetForm() {
     setTitle('');
     setTargetAmount('');
+    setTargetDate('');
   }
 
   async function handleAddGoal() {
     const cleanTitle = title.trim();
     const numericTarget = Number(targetAmount.trim().replace(',', '.'));
 
-    if (!cleanTitle || !targetAmount) {
-      Alert.alert('Campos incompletos', 'Completa el nombre y monto objetivo.');
+    if (!cleanTitle || !targetAmount || !targetDate) {
+      Alert.alert('Campos incompletos', 'Completa el nombre, monto objetivo y fecha límite.');
       return;
     }
 
@@ -78,6 +83,7 @@ export default function GoalsScreen() {
         targetAmount: numericTarget,
         currentAmount: 0,
         createdAt: new Date().toISOString(),
+        targetDate: targetDate,
       });
 
       setGoals(updatedGoals);
@@ -189,23 +195,44 @@ export default function GoalsScreen() {
     Alert.alert('¡Meta completada! 🏆', `Completaste: ${goal.title}`);
   }
 
-  async function handleDeleteGoal(id: number) {
-    Alert.alert(
-      'Eliminar meta',
-      '¿Seguro que deseas eliminar esta meta? El dinero ahorrado no volverá automáticamente al saldo.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            const updatedGoals = await deleteGoal(id);
-            setGoals(updatedGoals);
-          },
+  async function handleDeleteGoal(goal: Goal) {
+  Alert.alert(
+    'Eliminar meta',
+    `¿Seguro que deseas eliminar esta meta? Se devolverán $${goal.currentAmount.toFixed(2)} a tu saldo disponible.`,
+    [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: async () => {
+          if (goal.currentAmount > 0) {
+            const refundTransaction: Transaction = {
+              id: Date.now(),
+              type: 'income',
+              amount: goal.currentAmount,
+              description: `Devolución de meta - ${goal.title}`,
+              category: 'Ahorro',
+              date: new Date().toISOString(),
+            };
+
+            await addTransaction(refundTransaction);
+          }
+
+          const updatedGoals = await deleteGoal(goal.id);
+          const updatedTransactions = await loadTransactions();
+
+          setGoals(updatedGoals);
+          setAvailableBalance(getBalance(updatedTransactions));
+
+          Alert.alert(
+            'Meta eliminada',
+            'El dinero ahorrado fue devuelto a tu saldo disponible.'
+          );
         },
-      ]
-    );
-  }
+      },
+    ]
+  );
+}
 
   const totalSaved = goals.reduce((total, goal) => total + goal.currentAmount, 0);
   const totalTarget = goals.reduce((total, goal) => total + goal.targetAmount, 0);
@@ -266,6 +293,15 @@ export default function GoalsScreen() {
           onChangeText={setTitle}
         />
 
+        <Text style={styles.label}>Fecha objetivo</Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="2026-12-31"
+          value={targetDate}
+          onChangeText={setTargetDate}
+        />
+
         <Text style={styles.label}>Monto objetivo</Text>
         <TextInput
           style={styles.input}
@@ -311,6 +347,8 @@ export default function GoalsScreen() {
           const progress = getGoalProgress(goal);
           const missingAmount = goal.targetAmount - goal.currentAmount;
           const isCompleted = progress >= 100;
+          const daysRemaining = getDaysRemaining(goal);
+          const statusText = getGoalStatusText(goal);
 
           return (
             <View key={goal.id} style={styles.goalCard}>
@@ -346,6 +384,20 @@ export default function GoalsScreen() {
                 />
               </View>
 
+              <Text style={styles.goalDate}>
+               📅 Fecha objetivo: {goal.targetDate}
+              </Text>
+
+              <Text style={styles.goalStatus}>
+               {statusText}
+              </Text>
+
+              {daysRemaining !== null && !isCompleted && (
+              <Text style={styles.goalDays}>
+               ⏳{daysRemaining} días restantes
+              </Text>
+             )}
+
               <Text style={styles.missingText}>
                 {isCompleted
                   ? 'Meta completada ✅'
@@ -371,7 +423,7 @@ export default function GoalsScreen() {
                   </>
                 )}
 
-                <Pressable onPress={() => handleDeleteGoal(goal.id)}>
+                <Pressable onPress={() => handleDeleteGoal(goal)}>
                   <Text style={styles.deleteText}>Eliminar</Text>
                 </Pressable>
               </View>
@@ -727,4 +779,22 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontWeight: 'bold',
   },
+
+  goalDate: {
+  marginTop: 10,
+  color: '#475569',
+  fontWeight: '600',
+},
+
+goalStatus: {
+  marginTop: 6,
+  fontWeight: 'bold',
+  color: '#2563EB',
+},
+
+goalDays: {
+  marginTop: 4,
+  color: '#F59E0B',
+  fontWeight: '600',
+},
 });

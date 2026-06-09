@@ -1,6 +1,6 @@
 import { loadTransactions, Transaction } from '@/data/transactions';
 import { generateFinancialReportPdf } from '@/data/pdf-report';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   Alert,
@@ -65,6 +65,7 @@ function normalizeExpenseCategory(category: string) {
 }
 
 export default function StatisticsScreen() {
+  const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('');
 
@@ -152,6 +153,9 @@ export default function StatisticsScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      <Pressable onPress={() => router.back()}>
+        <Text style={styles.backText}>← Volver</Text>
+      </Pressable>
       <Text style={styles.title}>Estadísticas 📊</Text>
       <Pressable style={styles.pdfButton} onPress={handleExportPdf}>
         <Text style={styles.pdfButtonText}>Exportar PDF 📄</Text>
@@ -315,15 +319,18 @@ export default function StatisticsScreen() {
           data={{
             labels: months,
             datasets: [
-              {
-                data: monthlyIncome,
-              },
-              {
-                data: monthlyExpense,
-              },
-            ],
-            legend: ['Ingresos', 'Gastos'],
-          }}
+           {
+             data: monthlyIncome,
+             color: (opacity = 1) => `rgba(22, 163, 74, ${opacity})`,
+          },
+          {
+            data: monthlyExpense,
+            color: (opacity = 1) => `rgba(220, 38, 38, ${opacity})`,
+          },
+        ],
+        legend: ['🟢 Ingresos', '🔴 Gastos'],
+       }}
+
           width={screenWidth - 40}
           height={260}
           yAxisLabel="$"
@@ -489,5 +496,12 @@ pdfButtonText: {
   color: '#FFFFFF',
   fontWeight: 'bold',
   fontSize: 16,
+},
+
+backText: {
+  color: '#2563EB',
+  fontWeight: 'bold',
+  fontSize: 16,
+  marginBottom: 14,
 },
 });
