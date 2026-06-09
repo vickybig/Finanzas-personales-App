@@ -1,3 +1,4 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   addGoal,
   deleteGoal,
@@ -37,6 +38,7 @@ export default function GoalsScreen() {
   const [title, setTitle] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
   const [targetDate, setTargetDate] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [savingAmount, setSavingAmount] = useState('');
@@ -132,6 +134,7 @@ export default function GoalsScreen() {
       description: `Meta de ahorro - ${selectedGoal.title}`,
       category: 'Ahorro',
       date: new Date().toISOString(),
+      goalId: selectedGoal.id,
     };
 
     await addTransaction(goalTransaction);
@@ -178,6 +181,7 @@ export default function GoalsScreen() {
       description: `Meta de ahorro - ${goal.title}`,
       category: 'Ahorro',
       date: new Date().toISOString(),
+      goalId: goal.id,
     };
 
     await addTransaction(goalTransaction);
@@ -206,13 +210,14 @@ export default function GoalsScreen() {
         style: 'destructive',
         onPress: async () => {
           if (goal.currentAmount > 0) {
+
             const refundTransaction: Transaction = {
               id: Date.now(),
               type: 'income',
               amount: goal.currentAmount,
               description: `Devolución de meta - ${goal.title}`,
               category: 'Ahorro',
-              date: new Date().toISOString(),
+             date: new Date().toISOString(),
             };
 
             await addTransaction(refundTransaction);
@@ -284,9 +289,9 @@ export default function GoalsScreen() {
 
       <View style={styles.formCard}>
         <Text style={styles.formTitle}>Nueva meta</Text>
-
         <Text style={styles.label}>Nombre</Text>
-        <TextInput
+        
+        <TextInput 
           style={styles.input}
           placeholder="Ej: Moto, laptop, viaje"
           value={title}
@@ -295,14 +300,42 @@ export default function GoalsScreen() {
 
         <Text style={styles.label}>Fecha objetivo</Text>
 
-        <TextInput
+        <Pressable
           style={styles.input}
-          placeholder="2026-12-31"
-          value={targetDate}
-          onChangeText={setTargetDate}
-        />
+          onPress={() => setShowDatePicker(true)}
+         >
+         <Text
+          style={
+            targetDate
+              ? styles.dateSelected
+              : styles.datePlaceholder
+          }
+         >
+          {targetDate || '📅 Seleccionar fecha'}
+         </Text>
+        </Pressable>
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={targetDate ? new Date(targetDate) : new Date()}
+            mode="date"
+            display="default"
+            minimumDate={new Date()}
+            onChange={(event, selectedDate) => {
+              setShowDatePicker(false);
+
+              if (selectedDate) {
+                const formattedDate =
+                  selectedDate.toISOString().split('T')[0];
+
+                setTargetDate(formattedDate);
+              }
+           }}
+          />
+        )}
 
         <Text style={styles.label}>Monto objetivo</Text>
+        
         <TextInput
           style={styles.input}
           placeholder="Ej: 500"
@@ -795,6 +828,16 @@ goalStatus: {
 goalDays: {
   marginTop: 4,
   color: '#F59E0B',
+  fontWeight: '600',
+},
+datePlaceholder: {
+  color: '#94A3B8',
+  fontSize: 16,
+},
+
+dateSelected: {
+  color: '#0F172A',
+  fontSize: 16,
   fontWeight: '600',
 },
 });

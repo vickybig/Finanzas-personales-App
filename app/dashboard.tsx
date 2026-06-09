@@ -1,4 +1,5 @@
 import { getCurrentUser, User } from '@/data/auth';
+import { loadGoals, updateGoal } from '@/data/goals';
 
 
 import {
@@ -115,23 +116,44 @@ export default function DashboardScreen() {
     }, [])
   );
 
-  async function handleDeleteTransaction(id: number) {
+  async function handleDeleteTransaction(transaction: Transaction) {
     Alert.alert(
-      'Eliminar movimiento',
-      '¿Estás seguro de que deseas eliminar esta transacción?',
+       'Eliminar movimiento',
+       '¿Estás seguro de que deseas eliminar esta transacción?',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Eliminar',
           style: 'destructive',
           onPress: async () => {
-            const updatedTransactions = await deleteTransaction(id);
-            setTransactionList(updatedTransactions);
-          },
+            if (
+              transaction.type === 'expense' &&
+              transaction.category === 'Ahorro' &&
+              transaction.goalId
+            ) {
+              const currentGoals = await loadGoals();
+              const relatedGoal = currentGoals.find(
+                (goal) => goal.id === transaction.goalId
+              );
+
+              if (relatedGoal) {
+                await updateGoal({
+                  ...relatedGoal,
+                  currentAmount: Math.max(
+                    relatedGoal.currentAmount - transaction.amount,
+                    0
+                  ),
+               });
+             }
+          }
+
+          const updatedTransactions = await deleteTransaction(transaction.id);
+          setTransactionList(updatedTransactions);
         },
-      ]
-    );
-  }
+      },
+    ]
+  );
+}
 
   const totalIncome = getTotalIncome(transactionList);
   const totalExpense = getTotalExpense(transactionList);
@@ -333,7 +355,7 @@ export default function DashboardScreen() {
                   <Text style={styles.editText}>Editar</Text>
                 </Pressable>
 
-                <Pressable onPress={() => handleDeleteTransaction(item.id)}>
+                <Pressable onPress={() => handleDeleteTransaction(item)}>
                   <Text style={styles.deleteText}>Eliminar</Text>
                 </Pressable>
               </View>

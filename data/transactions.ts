@@ -7,6 +7,7 @@ export type Transaction = {
   description: string;
   category: string;
   date: string;
+  goalId?: number;
 };
 
 const STORAGE_KEY = 'fingo_transactions';
