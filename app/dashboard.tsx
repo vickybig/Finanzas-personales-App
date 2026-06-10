@@ -207,7 +207,7 @@ export default function DashboardScreen() {
         <View style={styles.headerButtons}>
           <Link href="/financial-ai" asChild>
             <Pressable style={styles.profileButton}>
-              <Text style={styles.profileIcon}>🤖</Text>
+              <Text style={styles.profileIcon}>🧠</Text>
             </Pressable>
           </Link>
 
