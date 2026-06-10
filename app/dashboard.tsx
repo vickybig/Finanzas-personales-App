@@ -204,11 +204,19 @@ export default function DashboardScreen() {
           <Text style={styles.dateText}>{currentDate}</Text>
         </View>
 
-        <Link href="/profile" asChild>
-          <Pressable style={styles.profileButton}>
-            <Text style={styles.profileIcon}>👤</Text>
-          </Pressable>
-       </Link>
+        <View style={styles.headerButtons}>
+          <Link href="/financial-ai" asChild>
+            <Pressable style={styles.profileButton}>
+              <Text style={styles.profileIcon}>🤖</Text>
+            </Pressable>
+          </Link>
+
+          <Link href="/profile" asChild>
+            <Pressable style={styles.profileButton}>
+              <Text style={styles.profileIcon}>👤</Text>
+           </Pressable>
+         </Link>
+        </View>
       </View>
 
       <View style={styles.balanceCard}>
@@ -636,6 +644,10 @@ filterText: {
   color: '#1E293B',
   fontWeight: 'bold',
 },
+ headerButtons: {
+  flexDirection: 'row',
+  gap: 10,
+},
   profileButton: {
   width: 42,
   height: 42,
@@ -649,4 +661,5 @@ filterText: {
 profileIcon: {
   fontSize: 20,
 },
+
 });
