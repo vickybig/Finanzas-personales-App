@@ -312,57 +312,65 @@ export default function DashboardScreen() {
       </View>
 
       {latestTransactions.length === 0 ? (
-        <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>Aún no hay movimientos</Text>
-          <Text style={styles.emptyText}>
-            Registra tu primer ingreso o gasto para empezar a controlar tus finanzas.
+  <View style={styles.emptyCard}>
+    <Text style={styles.emptyTitle}>Aún no hay movimientos</Text>
+    <Text style={styles.emptyText}>
+      Registra tu primer ingreso o gasto para empezar a controlar tus finanzas.
+    </Text>
+  </View>
+) : (
+  filteredTransactions.map((item) => {
+    const normalizedCategory = normalizeCategory(item.type, item.category);
+    const categoryIcon = getCategoryIcon(item.type, item.category);
+    const isIncome = item.type === 'income';
+
+    return (
+      <View key={item.id} style={styles.movementCard}>
+        <View style={styles.movementHeader}>
+          <View style={styles.movementIconBox}>
+            <Text style={styles.movementIcon}>{categoryIcon}</Text>
+          </View>
+
+          <View style={styles.movementInfo}>
+            <Text style={styles.movementDescription}>{item.description}</Text>
+            <Text style={styles.categoryText}>
+              {normalizedCategory} · {formatDate(item.date)}
+            </Text>
+          </View>
+
+          <Text style={isIncome ? styles.incomeAmount : styles.expenseAmount}>
+            {isIncome ? '+' : '-'}${item.amount.toFixed(2)}
           </Text>
         </View>
-      ) : (
-        filteredTransactions.map((item) => {
-          const normalizedCategory = normalizeCategory(item.type, item.category);
-          const categoryIcon = getCategoryIcon(item.type, item.category);
-          const isIncome = item.type === 'income';
 
-          return (
-            <View key={item.id} style={styles.movementCard}>
-              <View style={styles.movementHeader}>
-                <View style={styles.movementIconBox}>
-                  <Text style={styles.movementIcon}>{categoryIcon}</Text>
-                </View>
+        {!item.locked ? (
+          <View style={styles.actionsContainer}>
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/edit-transaction',
+                  params: { id: String(item.id) },
+                })
+              }
+            >
+              <Text style={styles.editText}>Editar</Text>
+            </Pressable>
 
-                <View style={styles.movementInfo}>
-                  <Text style={styles.movementDescription}>{item.description}</Text>
-                  <Text style={styles.categoryText}>
-                    {normalizedCategory} · {formatDate(item.date)}
-                  </Text>
-                </View>
-
-                <Text style={isIncome ? styles.incomeAmount : styles.expenseAmount}>
-                  {isIncome ? '+' : '-'}${item.amount.toFixed(2)}
-                </Text>
-              </View>
-
-              <View style={styles.actionsContainer}>
-                <Pressable
-                  onPress={() =>
-                    router.push({
-                      pathname: '/edit-transaction',
-                      params: { id: String(item.id) },
-                    })
-                  }
-                >
-                  <Text style={styles.editText}>Editar</Text>
-                </Pressable>
-
-                <Pressable onPress={() => handleDeleteTransaction(item)}>
-                  <Text style={styles.deleteText}>Eliminar</Text>
-                </Pressable>
-              </View>
-            </View>
-          );
-        })
-      )}
+            <Pressable onPress={() => handleDeleteTransaction(item)}>
+              <Text style={styles.deleteText}>Eliminar</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.actionsContainer}>
+            <Text style={styles.lockedText}>
+              🔒 Movimiento automático de meta
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  })
+ )}
     </ScrollView>
   );
 }
@@ -601,6 +609,11 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontWeight: '700',
   },
+  lockedText: {
+  color: '#64748B',
+  fontWeight: '600',
+  fontSize: 12,
+},
   filterContainer: {
   flexDirection: 'row',
   flexWrap: 'wrap',

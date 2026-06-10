@@ -7,6 +7,9 @@ export type Transaction = {
   description: string;
   category: string;
   date: string;
+
+  source?: 'manual' | 'goal';
+  locked?: boolean;
   goalId?: number;
 };
 

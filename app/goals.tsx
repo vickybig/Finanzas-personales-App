@@ -135,6 +135,8 @@ export default function GoalsScreen() {
       category: 'Ahorro',
       date: new Date().toISOString(),
       goalId: selectedGoal.id,
+      source: 'goal',
+      locked: true,
     };
 
     await addTransaction(goalTransaction);
@@ -182,6 +184,8 @@ export default function GoalsScreen() {
       category: 'Ahorro',
       date: new Date().toISOString(),
       goalId: goal.id,
+      source: 'goal',
+      locked: true,
     };
 
     await addTransaction(goalTransaction);
@@ -217,9 +221,12 @@ export default function GoalsScreen() {
               amount: goal.currentAmount,
               description: `Devolución de meta - ${goal.title}`,
               category: 'Ahorro',
-             date: new Date().toISOString(),
-            };
-
+              date: new Date().toISOString(),
+              goalId: goal.id,
+              source: 'goal',
+              locked: true,
+            }; 
+            
             await addTransaction(refundTransaction);
           }
 
