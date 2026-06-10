@@ -48,9 +48,7 @@ function getTopExpenseCategory(transactions: Transaction[]): TopCategory | null 
     (item) => item.type === 'expense' && item.category !== 'Ahorro'
   );
 
-  if (expenses.length === 0) {
-    return null;
-  }
+  if (expenses.length === 0) return null;
 
   const totalExpenseWithoutSavings = expenses.reduce(
     (total, item) => total + item.amount,
@@ -72,10 +70,7 @@ function getTopExpenseCategory(transactions: Transaction[]): TopCategory | null 
   return {
     name: topCategoryName,
     amount,
-    percentage:
-      totalExpenseWithoutSavings > 0
-        ? (amount / totalExpenseWithoutSavings) * 100
-        : 0,
+    percentage: totalExpenseWithoutSavings > 0 ? (amount / totalExpenseWithoutSavings) * 100 : 0,
   };
 }
 
@@ -126,7 +121,6 @@ export default function FinancialAIScreen() {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Resumen inteligente</Text>
-
         <Text style={styles.item}>💰 Ingresos: ${income.toFixed(2)}</Text>
         <Text style={styles.item}>💸 Gastos: ${expense.toFixed(2)}</Text>
         <Text style={styles.item}>📊 Saldo: ${balance.toFixed(2)}</Text>
@@ -138,12 +132,8 @@ export default function FinancialAIScreen() {
 
         {topCategory ? (
           <>
-            <Text style={styles.item}>
-              📌 Categoría: {topCategory.name}
-            </Text>
-            <Text style={styles.item}>
-              💸 Total gastado: ${topCategory.amount.toFixed(2)}
-            </Text>
+            <Text style={styles.item}>📌 Categoría: {topCategory.name}</Text>
+            <Text style={styles.item}>💸 Total gastado: ${topCategory.amount.toFixed(2)}</Text>
             <Text style={styles.item}>
               📊 Representa el {topCategory.percentage.toFixed(1)}% de tus gastos variables
             </Text>
@@ -157,7 +147,6 @@ export default function FinancialAIScreen() {
 
       <View style={styles.adviceCard}>
         <Text style={styles.cardTitle}>Recomendación personalizada</Text>
-
         <Text style={styles.adviceText}>
           {topCategory
             ? `Tu mayor gasto está en ${topCategory.name}. Si reduces solo un 10% en esta categoría, podrías ahorrar aproximadamente $${possibleSaving.toFixed(2)} adicionales.`
@@ -166,6 +155,17 @@ export default function FinancialAIScreen() {
             : 'Empieza registrando tus gastos principales para que FinGo AI pueda darte recomendaciones más precisas.'}
         </Text>
       </View>
+
+      <Pressable
+        style={styles.reportButton}
+        onPress={() =>
+        router.push({
+          pathname: '/financial-report',
+        })
+      }
+     >
+        <Text style={styles.reportButtonText}>Ver Reporte Financiero 📄</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -223,6 +223,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     padding: 20,
     elevation: 2,
+    marginBottom: 16,
   },
   cardTitle: {
     fontSize: 20,
@@ -254,5 +255,16 @@ const styles = StyleSheet.create({
     color: '#1E40AF',
     fontWeight: '700',
     lineHeight: 23,
+  },
+  reportButton: {
+    backgroundColor: '#0F172A',
+    padding: 17,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  reportButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
