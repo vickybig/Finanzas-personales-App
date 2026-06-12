@@ -20,6 +20,7 @@ export default function ProfileScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [editedEmail, setEditedEmail] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -77,7 +78,7 @@ export default function ProfileScreen() {
     const updatedUser = {
       ...user,
       name: editedName.trim(),
-      email: editedEmail.trim(),
+      email: editedEmail.trim().toLowerCase(),
     };
 
     await updateUserInStorage(updatedUser);
@@ -204,6 +205,22 @@ export default function ProfileScreen() {
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Correo</Text>
               <Text style={styles.infoValue}>{user?.email || 'No registrado'}</Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Contraseña</Text>
+
+              <View style={styles.passwordRow}>
+                <Text style={styles.infoValue}>
+                  {showPassword ? user?.password || 'No registrada' : '••••••••'}
+                </Text>
+
+                <Pressable onPress={() => setShowPassword(!showPassword)}>
+                  <Text style={styles.eyeText}>
+                    {showPassword ? 'Ocultar 🙈' : 'Ver 👁️'}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
 
             <View style={styles.infoRow}>
@@ -353,6 +370,16 @@ const styles = StyleSheet.create({
     color: '#1E293B',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  passwordRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  eyeText: {
+    color: '#10B981',
+    fontWeight: 'bold',
+    fontSize: 15,
   },
   inputLabel: {
     color: '#64748B',

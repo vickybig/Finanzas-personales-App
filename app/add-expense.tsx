@@ -20,6 +20,7 @@ const expenseCategories = [
   { name: 'Restaurantes', icon: '🍽️' },
   { name: 'Salud', icon: '❤️' },
   { name: 'Trabajo', icon: '💼' },
+  { name: 'Otros', icon: '📦' },
 ];
 
 export default function AddExpenseScreen() {
