@@ -26,12 +26,15 @@ export default function ProfileScreen() {
     useCallback(() => {
       async function loadUser() {
         const currentUser = await getCurrentUser();
-        setUser(currentUser);
 
-        if (currentUser) {
-          setEditedName(currentUser.name || '');
-          setEditedEmail(currentUser.email || '');
+        if (!currentUser) {
+          router.replace('/login');
+          return;
         }
+
+        setUser(currentUser);
+        setEditedName(currentUser.name || '');
+        setEditedEmail(currentUser.email || '');
       }
 
       loadUser();
@@ -102,7 +105,13 @@ export default function ProfileScreen() {
         style: 'destructive',
         onPress: async () => {
           await logoutUser();
-          router.replace('/login');
+          setUser(null);
+
+          router.dismissAll();
+
+          setTimeout(() => {
+            router.replace('/login');
+          }, 100);
         },
       },
     ]);
@@ -131,6 +140,9 @@ export default function ProfileScreen() {
       'Recordatorios desactivados',
       'Ya no recibirás avisos de FinGo.'
     );
+  }
+  if (!user) {
+  return null;
   }
 
   return (

@@ -106,6 +106,12 @@ export default function DashboardScreen() {
       async function loadData() {
         setIsLoading(true);
         const currentUser = await getCurrentUser();
+
+        if (!currentUser) {
+         router.replace('/login');
+        return;
+        }
+
         setUser(currentUser);
         const savedTransactions = await loadTransactions();
         setTransactionList(savedTransactions || []);
