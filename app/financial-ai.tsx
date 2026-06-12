@@ -15,31 +15,56 @@ type TopCategory = {
   percentage: number;
 };
 
-function getFinancialStatus(savingsRate: number, balance: number) {
+type FinancialStatus = {
+  level: 'Excelente' | 'Bueno' | 'Atención' | 'Riesgo';
+  icon: string;
+  message: string;
+  background: string;
+  color: string;
+  note: string;
+};
+
+function getFinancialStatus(savingsRate: number, balance: number): FinancialStatus {
   if (balance < 0 || savingsRate <= 0) {
     return {
-      label: '🔴 Riesgo financiero',
+      level: 'Riesgo',
+      icon: '🔴',
       message: 'Tus gastos están alcanzando o superando tus ingresos.',
+      background: '#FEE2E2',
+      color: '#DC2626',
+      note: 'Tu situación financiera requiere atención urgente.',
     };
   }
 
   if (savingsRate >= 40) {
     return {
-      label: '🟢 Excelente',
+      level: 'Excelente',
+      icon: '🟢',
       message: 'Tienes una buena capacidad de ahorro.',
+      background: '#DCFCE7',
+      color: '#16A34A',
+      note: 'Tu situación está en un nivel óptimo.',
     };
   }
 
   if (savingsRate >= 20) {
     return {
-      label: '🟡 Bueno',
+      level: 'Bueno',
+      icon: '🟡',
       message: 'Tu situación es estable, pero aún puedes optimizar tus gastos.',
+      background: '#FEF9C3',
+      color: '#CA8A04',
+      note: 'Tienes áreas de mejora para crecer más.',
     };
   }
 
   return {
-    label: '🟠 Atención',
+    level: 'Atención',
+    icon: '🟠',
     message: 'Tu ahorro es bajo. Revisa tus gastos variables.',
+    background: '#FFEDD5',
+    color: '#EA580C',
+    note: 'Tus gastos pueden estar afectando tu ahorro.',
   };
 }
 
@@ -70,7 +95,10 @@ function getTopExpenseCategory(transactions: Transaction[]): TopCategory | null 
   return {
     name: topCategoryName,
     amount,
-    percentage: totalExpenseWithoutSavings > 0 ? (amount / totalExpenseWithoutSavings) * 100 : 0,
+    percentage:
+      totalExpenseWithoutSavings > 0
+        ? (amount / totalExpenseWithoutSavings) * 100
+        : 0,
   };
 }
 
@@ -100,6 +128,7 @@ export default function FinancialAIScreen() {
   const savingsRate = income > 0 ? ((income - expense) / income) * 100 : 0;
   const status = getFinancialStatus(savingsRate, balance);
   const possibleSaving = topCategory ? topCategory.amount * 0.1 : 0;
+  const topCategoryProgress = Math.min(topCategory?.percentage || 0, 100);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -115,16 +144,56 @@ export default function FinancialAIScreen() {
 
       <View style={styles.statusCard}>
         <Text style={styles.cardTitle}>Estado financiero</Text>
-        <Text style={styles.statusTitle}>{status.label}</Text>
-        <Text style={styles.statusMessage}>{status.message}</Text>
+
+        <View style={[styles.statusBox, { backgroundColor: status.background }]}>
+          <View style={styles.statusIconCircle}>
+            <Text style={styles.statusIcon}>{status.icon}</Text>
+          </View>
+
+          <View style={styles.statusContent}>
+            <Text style={[styles.statusLevel, { color: status.color }]}>
+              {status.level}
+            </Text>
+            <Text style={styles.statusMessage}>{status.message}</Text>
+          </View>
+        </View>
+
+        <View style={styles.levelBar}>
+          <View style={[styles.levelSegment, { backgroundColor: '#DC2626' }]} />
+          <View style={[styles.levelSegment, { backgroundColor: '#EA580C' }]} />
+          <View style={[styles.levelSegment, { backgroundColor: '#FACC15' }]} />
+          <View style={[styles.levelSegment, { backgroundColor: '#16A34A' }]} />
+        </View>
+
+        <View style={[styles.statusNote, { backgroundColor: status.background }]}>
+          <Text style={[styles.statusNoteText, { color: status.color }]}>
+            {status.note}
+          </Text>
+        </View>
       </View>
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Resumen inteligente</Text>
-        <Text style={styles.item}>💰 Ingresos: ${income.toFixed(2)}</Text>
-        <Text style={styles.item}>💸 Gastos: ${expense.toFixed(2)}</Text>
-        <Text style={styles.item}>📊 Saldo: ${balance.toFixed(2)}</Text>
-        <Text style={styles.item}>🏦 Tasa de ahorro: {savingsRate.toFixed(1)}%</Text>
+
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>💰 Ingresos</Text>
+          <Text style={styles.incomeText}>${income.toFixed(2)}</Text>
+        </View>
+
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>💸 Gastos</Text>
+          <Text style={styles.expenseText}>${expense.toFixed(2)}</Text>
+        </View>
+
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>📊 Saldo</Text>
+          <Text style={styles.balanceText}>${balance.toFixed(2)}</Text>
+        </View>
+
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>🏦 Tasa de ahorro</Text>
+          <Text style={styles.rateText}>{savingsRate.toFixed(1)}%</Text>
+        </View>
       </View>
 
       <View style={styles.card}>
@@ -132,11 +201,35 @@ export default function FinancialAIScreen() {
 
         {topCategory ? (
           <>
-            <Text style={styles.item}>📌 Categoría: {topCategory.name}</Text>
-            <Text style={styles.item}>💸 Total gastado: ${topCategory.amount.toFixed(2)}</Text>
-            <Text style={styles.item}>
-              📊 Representa el {topCategory.percentage.toFixed(1)}% de tus gastos variables
-            </Text>
+            <View style={styles.categoryHeader}>
+              <View style={styles.categoryIconBox}>
+                <Text style={styles.categoryIcon}>📌</Text>
+              </View>
+
+              <View style={styles.categoryInfo}>
+                <Text style={[styles.categoryName, { color: status.color }]}>
+                  {topCategory.name}
+                </Text>
+                <Text style={styles.categoryDetail}>
+                  ${topCategory.amount.toFixed(2)} gastados
+                </Text>
+                <Text style={styles.categoryDetail}>
+                  Representa el {topCategory.percentage.toFixed(1)}% de tus gastos variables
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${topCategoryProgress}%`,
+                    backgroundColor: status.color,
+                  },
+                ]}
+              />
+            </View>
           </>
         ) : (
           <Text style={styles.item}>
@@ -145,25 +238,32 @@ export default function FinancialAIScreen() {
         )}
       </View>
 
-      <View style={styles.adviceCard}>
+      <View style={[styles.adviceCard, { backgroundColor: status.background }]}>
         <Text style={styles.cardTitle}>Recomendación personalizada</Text>
-        <Text style={styles.adviceText}>
-          {topCategory
-            ? `Tu mayor gasto está en ${topCategory.name}. Si reduces solo un 10% en esta categoría, podrías ahorrar aproximadamente $${possibleSaving.toFixed(2)} adicionales.`
-            : savingsRate >= 20
-            ? 'Vas bien. Mantén tus gastos controlados y sigue registrando tus movimientos.'
-            : 'Empieza registrando tus gastos principales para que FinGo AI pueda darte recomendaciones más precisas.'}
-        </Text>
+
+        <View style={styles.adviceRow}>
+          <View style={styles.adviceIconBox}>
+            <Text style={styles.adviceIcon}>🚀</Text>
+          </View>
+
+          <Text style={[styles.adviceText, { color: status.color }]}>
+            {topCategory
+              ? `Tu mayor gasto está en ${topCategory.name}. Si reduces solo un 10%, podrías ahorrar aproximadamente $${possibleSaving.toFixed(2)} adicionales.`
+              : savingsRate >= 20
+              ? 'Vas bien. Mantén tus gastos controlados y sigue registrando tus movimientos.'
+              : 'Empieza registrando tus gastos principales para que FinGo AI pueda darte recomendaciones más precisas.'}
+          </Text>
+        </View>
       </View>
 
       <Pressable
         style={styles.reportButton}
         onPress={() =>
-        router.push({
-          pathname: '/financial-report',
-        })
-      }
-     >
+          router.push({
+            pathname: '/financial-report',
+          })
+        }
+      >
         <Text style={styles.reportButtonText}>Ver Reporte Financiero 📄</Text>
       </Pressable>
     </ScrollView>
@@ -207,9 +307,60 @@ const styles = StyleSheet.create({
   statusCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
-    padding: 20,
+    padding: 18,
     marginBottom: 16,
     elevation: 2,
+  },
+  statusBox: {
+    borderRadius: 18,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  statusIconCircle: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    backgroundColor: 'rgba(255,255,255,0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  statusIcon: {
+    fontSize: 30,
+  },
+  statusContent: {
+    flex: 1,
+  },
+  statusLevel: {
+    fontSize: 25,
+    fontWeight: '900',
+    marginBottom: 4,
+  },
+  statusMessage: {
+    fontSize: 15,
+    color: '#475569',
+    fontWeight: '600',
+    lineHeight: 21,
+  },
+  levelBar: {
+    flexDirection: 'row',
+    gap: 4,
+    marginBottom: 12,
+  },
+  levelSegment: {
+    flex: 1,
+    height: 7,
+    borderRadius: 10,
+  },
+  statusNote: {
+    padding: 12,
+    borderRadius: 14,
+  },
+  statusNoteText: {
+    fontWeight: '800',
+    fontSize: 14,
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -219,7 +370,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   adviceCard: {
-    backgroundColor: '#EFF6FF',
     borderRadius: 22,
     padding: 20,
     elevation: 2,
@@ -231,17 +381,38 @@ const styles = StyleSheet.create({
     color: '#1E293B',
     marginBottom: 14,
   },
-  statusTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#0F172A',
-    marginBottom: 8,
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    paddingVertical: 10,
   },
-  statusMessage: {
+  summaryLabel: {
     fontSize: 16,
-    color: '#475569',
-    fontWeight: '600',
-    lineHeight: 22,
+    color: '#334155',
+    fontWeight: '700',
+  },
+  incomeText: {
+    color: '#16A34A',
+    fontWeight: '900',
+    fontSize: 16,
+  },
+  expenseText: {
+    color: '#DC2626',
+    fontWeight: '900',
+    fontSize: 16,
+  },
+  balanceText: {
+    color: '#2563EB',
+    fontWeight: '900',
+    fontSize: 16,
+  },
+  rateText: {
+    color: '#7C3AED',
+    fontWeight: '900',
+    fontSize: 16,
   },
   item: {
     fontSize: 16,
@@ -250,11 +421,68 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     lineHeight: 22,
   },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  categoryIconBox: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  categoryIcon: {
+    fontSize: 27,
+  },
+  categoryInfo: {
+    flex: 1,
+  },
+  categoryName: {
+    fontSize: 18,
+    fontWeight: '900',
+    marginBottom: 4,
+  },
+  categoryDetail: {
+    fontSize: 14,
+    color: '#475569',
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+  progressTrack: {
+    height: 9,
+    borderRadius: 20,
+    backgroundColor: '#E2E8F0',
+    marginTop: 18,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 20,
+  },
+  adviceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  adviceIconBox: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  adviceIcon: {
+    fontSize: 26,
+  },
   adviceText: {
-    fontSize: 16,
-    color: '#1E40AF',
-    fontWeight: '700',
-    lineHeight: 23,
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '800',
+    lineHeight: 22,
   },
   reportButton: {
     backgroundColor: '#0F172A',
