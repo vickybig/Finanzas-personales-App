@@ -1,8 +1,10 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { addTransaction } from '@/data/transactions';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -27,7 +29,10 @@ export default function AddIncomeScreen() {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
 
-  const currentDate = new Date().toLocaleDateString('es-EC');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const formattedDate = selectedDate.toLocaleDateString('es-EC');
 
   async function handleSaveIncome() {
     const cleanAmount = amount.trim();
@@ -51,12 +56,13 @@ export default function AddIncomeScreen() {
       amount: numericAmount,
       description: cleanDescription,
       category,
-      date: new Date().toISOString(),
+      date: selectedDate.toISOString(),
     });
 
     setAmount('');
     setDescription('');
     setCategory('');
+    setSelectedDate(new Date());
 
     Alert.alert('Ingreso guardado', 'El ingreso se registró correctamente.');
     router.push('/dashboard');
@@ -68,12 +74,11 @@ export default function AddIncomeScreen() {
       contentContainerStyle={styles.contentContainer}
     >
       <TouchableOpacity onPress={() => router.back()}>
-       <Text style={styles.backText}>← Volver</Text>
+        <Text style={styles.backText}>← Volver</Text>
       </TouchableOpacity>
 
       <Text style={styles.appName}>FINGO</Text>
       <Text style={styles.title}>Registrar Ingreso</Text>
-      
 
       <Text style={styles.label}>Monto</Text>
       <TextInput
@@ -122,10 +127,30 @@ export default function AddIncomeScreen() {
       </View>
 
       <Text style={styles.label}>Fecha</Text>
-      <View style={styles.dateBox}>
-        <Text style={styles.dateText}>{currentDate}</Text>
+
+      <TouchableOpacity
+        style={styles.dateBox}
+        onPress={() => setShowDatePicker(true)}
+      >
+        <Text style={styles.dateText}>{formattedDate}</Text>
         <Text style={styles.calendarIcon}>📅</Text>
-      </View>
+      </TouchableOpacity>
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          maximumDate={new Date()}
+          onChange={(event, date) => {
+            setShowDatePicker(false);
+
+            if (date) {
+              setSelectedDate(date);
+            }
+          }}
+        />
+      )}
 
       <TouchableOpacity style={styles.button} onPress={handleSaveIncome}>
         <Text style={styles.buttonText}>Guardar Ingreso</Text>
@@ -237,9 +262,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   backText: {
-  color: '#2563EB',
-  fontWeight: 'bold',
-  fontSize: 16,
-  marginBottom: 14,
-},
+    color: '#2563EB',
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 14,
+  },
 });
