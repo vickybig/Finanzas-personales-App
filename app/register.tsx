@@ -25,9 +25,68 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  function hasUppercase(value: string) {
+    return /[A-ZÁÉÍÓÚÑ]/.test(value);
+  }
+
+  function hasNumber(value: string) {
+    return /\d/.test(value);
+  }
+
+  function getPasswordStrength(value: string) {
+    let score = 0;
+
+    if (value.length >= 6) score++;
+    if (hasUppercase(value)) score++;
+    if (hasNumber(value)) score++;
+    if (value.length >= 8) score++;
+
+    if (!value) {
+      return {
+        label: 'Sin contraseña',
+        color: '#CBD5E1',
+        width: '0%',
+      };
+    }
+
+    if (score <= 1) {
+      return {
+        label: 'Débil',
+        color: '#EF4444',
+        width: '33%',
+      };
+    }
+
+    if (score <= 3) {
+      return {
+        label: 'Media',
+        color: '#F59E0B',
+        width: '66%',
+      };
+    }
+
+    return {
+      label: 'Fuerte',
+      color: '#10B981',
+      width: '100%',
+    };
+  }
+
+  const passwordStrength = getPasswordStrength(password);
+
   async function handleRegister() {
+    const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
+
     if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       Alert.alert('Campos incompletos', 'Completa todos los campos.');
+      return;
+    }
+
+    if (!nameRegex.test(name.trim())) {
+      Alert.alert(
+        'Nombre inválido',
+        'El nombre solo debe contener letras. No se permiten números ni caracteres especiales.'
+      );
       return;
     }
 
@@ -36,8 +95,24 @@ export default function RegisterScreen() {
       return;
     }
 
-    if (password.length < 4) {
-      Alert.alert('Contraseña débil', 'La contraseña debe tener al menos 4 caracteres.');
+    if (password.length < 6) {
+      Alert.alert('Contraseña débil', 'La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    if (!hasUppercase(password)) {
+      Alert.alert(
+        'Contraseña incompleta',
+        'La contraseña debe tener al menos una letra mayúscula.'
+      );
+      return;
+    }
+
+    if (!hasNumber(password)) {
+      Alert.alert(
+        'Contraseña incompleta',
+        'La contraseña debe tener al menos un número.'
+      );
       return;
     }
 
@@ -47,7 +122,7 @@ export default function RegisterScreen() {
     }
 
     try {
-      await registerUser(name, email, password);
+      await registerUser(name.trim(), email.trim(), password);
       Alert.alert('Cuenta creada', 'Tu cuenta fue registrada correctamente.');
       router.replace('/dashboard');
     } catch {
@@ -110,6 +185,31 @@ export default function RegisterScreen() {
             >
               <Text style={styles.eyeText}>{showPassword ? '🙈' : '👁️'}</Text>
             </Pressable>
+          </View>
+
+          <View style={styles.strengthContainer}>
+            <View style={styles.strengthHeader}>
+              <Text style={styles.strengthLabel}>Seguridad de contraseña</Text>
+              <Text style={[styles.strengthText, { color: passwordStrength.color }]}>
+                {passwordStrength.label}
+              </Text>
+            </View>
+
+            <View style={styles.strengthBarBackground}>
+              <View
+                style={[
+                  styles.strengthBarFill,
+                  {
+                    width: passwordStrength.width as any,
+                    backgroundColor: passwordStrength.color,
+                  },
+                ]}
+              />
+            </View>
+
+            <Text style={styles.passwordHelp}>
+              Debe tener mínimo 6 caracteres, una mayúscula y un número.
+            </Text>
           </View>
 
           <Text style={styles.label}>Confirmar contraseña</Text>
@@ -217,7 +317,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#CBD5E1',
     borderRadius: 16,
-    marginBottom: 14,
+    marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -232,6 +332,38 @@ const styles = StyleSheet.create({
   },
   eyeText: {
     fontSize: 20,
+  },
+  strengthContainer: {
+    marginBottom: 14,
+  },
+  strengthHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  strengthLabel: {
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  strengthText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  strengthBarBackground: {
+    height: 8,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 6,
+  },
+  strengthBarFill: {
+    height: '100%',
+    borderRadius: 20,
+  },
+  passwordHelp: {
+    fontSize: 12,
+    color: '#64748B',
   },
   primaryButton: {
     backgroundColor: '#10B981',
