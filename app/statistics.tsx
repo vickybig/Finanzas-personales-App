@@ -98,6 +98,8 @@ export default function StatisticsScreen() {
   const currentYear = new Date().getFullYear();
   const monthlyIncome = Array(12).fill(0);
   const monthlyExpense = Array(12).fill(0);
+  const accumulatedIncome = Array(12).fill(0);
+  const accumulatedExpense = Array(12).fill(0);
   const expensesByCategory: Record<string, number> = {};
   const expensesBySelectedCategory = Array(12).fill(0);
 
@@ -153,6 +155,17 @@ export default function StatisticsScreen() {
       }
     }
   });
+
+  let runningIncome = 0;
+  let runningExpense = 0;
+
+  for (let i = 0; i < 12; i++) {
+    runningIncome += monthlyIncome[i];
+    runningExpense += monthlyExpense[i];
+
+    accumulatedIncome[i] = runningIncome;
+    accumulatedExpense[i] = runningExpense;
+  }
 
   const totalIncome = monthlyIncome.reduce((total, item) => total + item, 0);
   const totalExpense = monthlyExpense.reduce((total, item) => total + item, 0);
@@ -442,6 +455,38 @@ export default function StatisticsScreen() {
           verticalLabelRotation={30}
           fromZero
         />
+      </View>
+
+      <View style={styles.chartCard}>
+        <Text style={styles.chartTitle}>
+          Ingresos vs Gastos Acumulados
+        </Text>
+
+        <LineChart
+          data={{
+            labels: months,
+            datasets: [
+              {
+                data: accumulatedIncome,
+                color: (opacity = 1) =>
+                  `rgba(22, 163, 74, ${opacity})`,
+              },
+              {
+                data: accumulatedExpense,
+                color: (opacity = 1) =>
+                  `rgba(220, 38, 38, ${opacity})`,
+              },
+            ],
+            legend: ['🟢 Ingresos Acumulados', '🔴 Gastos Acumulados'],
+          }}
+          width={screenWidth - 40}
+          height={260}
+          yAxisLabel="$"
+          yAxisSuffix=""
+          chartConfig={chartConfig}
+          bezier
+          fromZero
+       />
       </View>
 
       <View style={styles.chartCard}>
