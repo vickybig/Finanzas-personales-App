@@ -477,7 +477,7 @@ export default function StatisticsScreen() {
                   `rgba(220, 38, 38, ${opacity})`,
               },
             ],
-            legend: ['🟢 Ingresos Acumulados', '🔴 Gastos Acumulados'],
+            legend: ['Ingresos Acumulados', 'Gastos Acumulados'],
           }}
           width={screenWidth - 40}
           height={260}
@@ -505,7 +505,7 @@ export default function StatisticsScreen() {
                 color: (opacity = 1) => `rgba(220, 38, 38, ${opacity})`,
               },
             ],
-            legend: ['🟢 Ingresos', '🔴 Gastos'],
+            legend: ['Ingresos', 'Gastos'],
           }}
           width={screenWidth - 40}
           height={260}
