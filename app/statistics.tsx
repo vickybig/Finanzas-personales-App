@@ -69,7 +69,7 @@ export default function StatisticsScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [filterType, setFilterType] = useState<
-    'all' | 'today' | 'week' | 'month' | 'year'
+    'all' | 'week' | 'month' | 'year'
   >('year');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
@@ -109,18 +109,12 @@ export default function StatisticsScreen() {
     const date = new Date(transaction.date);
 
     switch (filterType) {
-      case 'today':
-        return (
-          date.getDate() === now.getDate() &&
-          date.getMonth() === now.getMonth() &&
-          date.getFullYear() === now.getFullYear()
-        );
-
+      
       case 'week': {
-        const firstDay = new Date(now);
-        firstDay.setDate(now.getDate() - now.getDay());
+        const last7Days = new Date();
+        last7Days.setDate(now.getDate() - 7);
 
-        return date >= firstDay && date <= now;
+        return date >= last7Days && date <= now;
       }
 
       case 'month':
@@ -214,7 +208,6 @@ export default function StatisticsScreen() {
       >
         {[
           { label: 'Todo', value: 'all' },
-          { label: 'Hoy', value: 'today' },
           { label: 'Semana', value: 'week' },
           { label: 'Mes', value: 'month' },
           { label: 'Año', value: 'year' },
@@ -245,12 +238,34 @@ export default function StatisticsScreen() {
       {filterType === 'month' && (
         <View
           style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
+            backgroundColor: '#FFFFFF',
+            borderRadius: 16,
+            padding: 12,
             marginBottom: 20,
-            gap: 8,
+            elevation: 2,
+            borderWidth: 1,
+            borderColor: '#E2E8F0',
           }}
         >
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: '600',
+              color: '#334155',
+              marginBottom: 10,
+            }}
+          >
+            Selecciona un mes
+          </Text>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              gap: 8,
+            }}
+          >
+
           {months.map((month, index) => (
             <Pressable
               key={month}
@@ -273,6 +288,7 @@ export default function StatisticsScreen() {
               </Text>
             </Pressable>
           ))}
+        </View>
         </View>
       )}
 

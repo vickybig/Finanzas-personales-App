@@ -1,11 +1,14 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   addGoal,
+  addGoalProgressHistory,
   deleteGoal,
   getDaysRemaining,
   getGoalProgress,
   getGoalStatusText,
   Goal,
+  GoalProgressHistory,
+  loadGoalProgressHistory,
   loadGoals,
   updateGoal,
 } from '@/data/goals';
@@ -20,6 +23,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   Alert,
+  Dimensions,
   Modal,
   Pressable,
   ScrollView,
@@ -28,11 +32,26 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { BarChart } from 'react-native-chart-kit';
+
+const screenWidth = Dimensions.get('window').width;
+
+const chartConfig = {
+  backgroundGradientFrom: '#FFFFFF',
+  backgroundGradientTo: '#FFFFFF',
+  decimalPlaces: 0,
+  color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(30, 41, 59, ${opacity})`,
+  barPercentage: 0.6,
+};
 
 export default function GoalsScreen() {
   const router = useRouter();
 
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [goalHistory, setGoalHistory] = useState<
+    Record<number, GoalProgressHistory[]>
+  >({});
   const [availableBalance, setAvailableBalance] = useState(0);
 
   const [title, setTitle] = useState('');
@@ -51,6 +70,15 @@ export default function GoalsScreen() {
         const savedTransactions = await loadTransactions();
 
         setGoals(savedGoals);
+
+        const historyMap: Record<number, GoalProgressHistory[]> = {};
+
+        for (const goal of savedGoals) {
+          historyMap[goal.id] = await loadGoalProgressHistory(goal.id);
+        }
+
+        setGoalHistory(historyMap);
+
         setAvailableBalance(getBalance(savedTransactions));
       }
 
@@ -140,6 +168,7 @@ export default function GoalsScreen() {
     };
 
     await addTransaction(goalTransaction);
+    await addGoalProgressHistory(selectedGoal.id, amount);
 
     const updatedGoals = await updateGoal({
       ...selectedGoal,
@@ -147,9 +176,14 @@ export default function GoalsScreen() {
     });
 
     const updatedTransactions = await loadTransactions();
+    const updatedHistory = await loadGoalProgressHistory(selectedGoal.id);
 
     setGoals(updatedGoals);
-    setAvailableBalance(getBalance(updatedTransactions));
+    setGoalHistory((previousHistory) => ({
+      ...previousHistory,
+      [selectedGoal.id]: updatedHistory,
+    }));
+    setAvailableBalance(getBalance(updatedTransactions));   
     setModalVisible(false);
     setSelectedGoal(null);
     setSavingAmount('');
@@ -189,6 +223,7 @@ export default function GoalsScreen() {
     };
 
     await addTransaction(goalTransaction);
+    await addGoalProgressHistory(goal.id, amountToComplete);
 
     const updatedGoals = await updateGoal({
       ...goal,
@@ -196,9 +231,17 @@ export default function GoalsScreen() {
     });
 
     const updatedTransactions = await loadTransactions();
+    const updatedHistory = await loadGoalProgressHistory(goal.id);
 
     setGoals(updatedGoals);
+    setGoalHistory((previousHistory) => ({
+      ...previousHistory,
+      [goal.id]: updatedHistory,
+    }));
+
     setAvailableBalance(getBalance(updatedTransactions));
+
+    
 
     Alert.alert('¡Meta completada! 🏆', `Completaste: ${goal.title}`);
   }
@@ -443,6 +486,43 @@ export default function GoalsScreen() {
                   ? 'Meta completada ✅'
                   : `Faltan $${missingAmount.toFixed(2)} para cumplirla`}
               </Text>
+
+              {goalHistory[goal.id]?.length > 0 && (
+                <View style={styles.historyCard}>
+                  <Text style={styles.historyTitle}>📊 Avances realizados</Text>
+
+                  <BarChart
+                    data={{
+                      labels: goalHistory[goal.id]
+                        .slice()
+                        .reverse()
+                        .slice(-5)
+                        .map((item) =>
+                          new Date(item.date).toLocaleDateString('es-EC', {
+                            day: '2-digit',
+                            month: '2-digit',
+                          })
+                        ),
+                      datasets: [
+                        {
+                          data: goalHistory[goal.id]
+                            .slice()
+                            .reverse()
+                            .slice(-5)
+                            .map((item) => item.amount),
+                        },
+                      ],
+                    }}
+                    width={screenWidth - 76}
+                    height={220}
+                    yAxisLabel="$"
+                    yAxisSuffix=""
+                    chartConfig={chartConfig}
+                    verticalLabelRotation={20}
+                    fromZero
+                  />
+                </View>
+              )}
 
               <View style={styles.actionsRow}>
                 {!isCompleted && (
@@ -846,5 +926,19 @@ dateSelected: {
   color: '#0F172A',
   fontSize: 16,
   fontWeight: '600',
+},
+
+historyCard: {
+  marginTop: 14,
+  paddingTop: 12,
+  borderTopWidth: 1,
+  borderTopColor: '#E2E8F0',
+},
+
+historyTitle: {
+  fontWeight: 'bold',
+  color: '#1E293B',
+  marginBottom: 10,
+  fontSize: 16,
 },
 });

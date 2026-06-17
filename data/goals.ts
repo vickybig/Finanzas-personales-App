@@ -13,7 +13,16 @@ export type Goal = {
   userEmail?: string;
 };
 
+export type GoalProgressHistory = {
+  id: number;
+  goalId: number;
+  amount: number;
+  date: string;
+  userEmail?: string;
+};
+
 const STORAGE_KEY = 'fingo_goals';
+const HISTORY_STORAGE_KEY = 'fingo_goal_progress_history';
 
 async function getCurrentUserEmail() {
   const currentUser = await getCurrentUser();
@@ -25,6 +34,17 @@ async function loadAllGoals(): Promise<Goal[]> {
 
   if (!data) {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+    return [];
+  }
+
+  return JSON.parse(data);
+}
+
+async function loadAllGoalProgressHistory(): Promise<GoalProgressHistory[]> {
+  const data = await AsyncStorage.getItem(HISTORY_STORAGE_KEY);
+
+  if (!data) {
+    await AsyncStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify([]));
     return [];
   }
 
@@ -139,7 +159,71 @@ export async function deleteGoal(id: number) {
 
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedGoals));
 
+  const allHistory = await loadAllGoalProgressHistory();
+
+  const updatedHistory = allHistory.filter(
+    (item) => !(item.goalId === id && item.userEmail === currentUserEmail)
+  );
+
+  await AsyncStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
+
   return updatedGoals.filter((item) => item.userEmail === currentUserEmail);
+}
+
+export async function addGoalProgressHistory(goalId: number, amount: number) {
+  const currentUserEmail = await getCurrentUserEmail();
+
+  if (!currentUserEmail) {
+    throw new Error('No hay usuario autenticado.');
+  }
+
+  const allHistory = await loadAllGoalProgressHistory();
+
+  const newHistoryItem: GoalProgressHistory = {
+    id: Date.now(),
+    goalId,
+    amount,
+    date: new Date().toISOString(),
+    userEmail: currentUserEmail,
+  };
+
+  const updatedHistory = [...allHistory, newHistoryItem];
+
+  await AsyncStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
+
+  return updatedHistory.filter((item) => item.userEmail === currentUserEmail);
+}
+
+export async function loadGoalProgressHistory(
+  goalId: number
+): Promise<GoalProgressHistory[]> {
+  const currentUserEmail = await getCurrentUserEmail();
+
+  if (!currentUserEmail) {
+    return [];
+  }
+
+  const allHistory = await loadAllGoalProgressHistory();
+
+  const normalizedHistory = allHistory.map((item) => ({
+    ...item,
+    userEmail: item.userEmail
+      ? item.userEmail.trim().toLowerCase()
+      : currentUserEmail,
+  }));
+
+  await AsyncStorage.setItem(
+    HISTORY_STORAGE_KEY,
+    JSON.stringify(normalizedHistory)
+  );
+
+  return normalizedHistory
+    .filter(
+      (item) => item.goalId === goalId && item.userEmail === currentUserEmail
+    )
+    .sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
 }
 
 export function getGoalProgress(goal: Goal) {
