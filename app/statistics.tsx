@@ -68,6 +68,10 @@ export default function StatisticsScreen() {
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [filterType, setFilterType] = useState<
+    'all' | 'today' | 'week' | 'month' | 'year'
+  >('year');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
   useFocusEffect(
     useCallback(() => {
@@ -81,15 +85,15 @@ export default function StatisticsScreen() {
   );
 
   async function handleExportPdf() {
-      try {
-        await generateFinancialReportPdf();
-      } catch {
-        Alert.alert(
+    try {
+      await generateFinancialReportPdf();
+    } catch {
+      Alert.alert(
         'Error al generar PDF',
-          'No se pudo crear el reporte financiero. Intenta nuevamente.'
-        );
-      }
+        'No se pudo crear el reporte financiero. Intenta nuevamente.'
+      );
     }
+  }
 
   const currentYear = new Date().getFullYear();
   const monthlyIncome = Array(12).fill(0);
@@ -99,8 +103,41 @@ export default function StatisticsScreen() {
 
   const expenseCategories = officialExpenseCategories;
   const activeCategory = selectedCategory || expenseCategories[0];
+  const now = new Date();
 
-  transactions.forEach((transaction) => {
+   const filteredTransactions = transactions.filter((transaction) => {
+    const date = new Date(transaction.date);
+
+    switch (filterType) {
+      case 'today':
+        return (
+          date.getDate() === now.getDate() &&
+          date.getMonth() === now.getMonth() &&
+          date.getFullYear() === now.getFullYear()
+        );
+
+      case 'week': {
+        const firstDay = new Date(now);
+        firstDay.setDate(now.getDate() - now.getDay());
+
+        return date >= firstDay && date <= now;
+      }
+
+      case 'month':
+        return (
+          date.getMonth() === selectedMonth &&
+          date.getFullYear() === now.getFullYear()
+        );
+
+      case 'year':
+        return date.getFullYear() === now.getFullYear();
+
+      default:
+        return true;
+    }
+  });
+
+  filteredTransactions.forEach((transaction) => {
     const transactionDate = new Date(transaction.date);
 
     if (transactionDate.getFullYear() === currentYear) {
@@ -156,25 +193,104 @@ export default function StatisticsScreen() {
       <Pressable onPress={() => router.back()}>
         <Text style={styles.backText}>← Volver</Text>
       </Pressable>
-      <Text style={styles.title}>Estadísticas 📊</Text>
+
+      <Text style={styles.title}>
+        {filterType === 'month'
+          ? `${months[selectedMonth]} ${currentYear} 📊`
+          : 'Estadísticas 📊'}
+      </Text>
+
       <Pressable style={styles.pdfButton} onPress={handleExportPdf}>
         <Text style={styles.pdfButtonText}>Exportar PDF 📄</Text>
       </Pressable>
 
+      <View
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          marginBottom: 20,
+          gap: 8,
+        }}
+      >
+        {[
+          { label: 'Todo', value: 'all' },
+          { label: 'Hoy', value: 'today' },
+          { label: 'Semana', value: 'week' },
+          { label: 'Mes', value: 'month' },
+          { label: 'Año', value: 'year' },
+        ].map((item) => (
+          <Pressable
+            key={item.value}
+            style={{
+              backgroundColor:
+                filterType === item.value ? '#10B981' : '#E2E8F0',
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              borderRadius: 20,
+            }}
+            onPress={() => setFilterType(item.value as any)}
+          >
+            <Text
+              style={{
+                color: filterType === item.value ? '#FFF' : '#334155',
+                fontWeight: '600',
+              }}
+            >
+              {item.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {filterType === 'month' && (
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            marginBottom: 20,
+            gap: 8,
+          }}
+        >
+          {months.map((month, index) => (
+            <Pressable
+              key={month}
+              style={{
+                backgroundColor:
+                  selectedMonth === index ? '#2563EB' : '#E2E8F0',
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: 20,
+              }}
+              onPress={() => setSelectedMonth(index)}
+            >
+              <Text
+                style={{
+                  color: selectedMonth === index ? '#FFF' : '#334155',
+                  fontWeight: '600',
+                }}
+              >
+                {month}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
       <View style={styles.summaryContainer}>
+        
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Ingresos del año</Text>
+          <Text style={styles.summaryLabel}>Ingresos</Text>
           <Text style={styles.income}>${totalIncome.toFixed(2)}</Text>
         </View>
 
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Gastos del año</Text>
+          <Text style={styles.summaryLabel}>Gastos</Text>
           <Text style={styles.expense}>${totalExpense.toFixed(2)}</Text>
         </View>
       </View>
 
       <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Ahorro estimado del año</Text>
+        <Text style={styles.balanceLabel}>Ahorro estimado</Text>
         <Text
           style={[
             styles.balanceAmount,
@@ -268,7 +384,7 @@ export default function StatisticsScreen() {
         </ScrollView>
 
         <Text style={styles.selectedCategoryText}>
-          {activeCategory}: ${totalSelectedCategory.toFixed(2)} en el año
+          {activeCategory}: ${totalSelectedCategory.toFixed(2)}
         </Text>
 
         <BarChart
@@ -319,18 +435,17 @@ export default function StatisticsScreen() {
           data={{
             labels: months,
             datasets: [
-           {
-             data: monthlyIncome,
-             color: (opacity = 1) => `rgba(22, 163, 74, ${opacity})`,
-          },
-          {
-            data: monthlyExpense,
-            color: (opacity = 1) => `rgba(220, 38, 38, ${opacity})`,
-          },
-        ],
-        legend: ['🟢 Ingresos', '🔴 Gastos'],
-       }}
-
+              {
+                data: monthlyIncome,
+                color: (opacity = 1) => `rgba(22, 163, 74, ${opacity})`,
+              },
+              {
+                data: monthlyExpense,
+                color: (opacity = 1) => `rgba(220, 38, 38, ${opacity})`,
+              },
+            ],
+            legend: ['🟢 Ingresos', '🔴 Gastos'],
+          }}
           width={screenWidth - 40}
           height={260}
           yAxisLabel="$"
@@ -485,23 +600,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   pdfButton: {
-  backgroundColor: '#2563EB',
-  padding: 16,
-  borderRadius: 16,
-  alignItems: 'center',
-  marginBottom: 18,
-},
-
-pdfButtonText: {
-  color: '#FFFFFF',
-  fontWeight: 'bold',
-  fontSize: 16,
-},
-
-backText: {
-  color: '#2563EB',
-  fontWeight: 'bold',
-  fontSize: 16,
-  marginBottom: 14,
-},
+    backgroundColor: '#2563EB',
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  pdfButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  backText: {
+    color: '#2563EB',
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 14,
+  },
+  
 });
