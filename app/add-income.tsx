@@ -84,6 +84,7 @@ export default function AddIncomeScreen() {
       <TextInput
         style={styles.input}
         placeholder="$ 0.00"
+        placeholderTextColor="#94A3B8"
         keyboardType="numeric"
         value={amount}
         onChangeText={setAmount}
@@ -93,6 +94,7 @@ export default function AddIncomeScreen() {
       <TextInput
         style={styles.input}
         placeholder="Ej: Sueldo mensual"
+        placeholderTextColor="#94A3B8"
         value={description}
         onChangeText={setDescription}
       />
@@ -195,6 +197,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
+    color: '#1E293B',
     marginBottom: 12,
   },
   categoriesContainer: {

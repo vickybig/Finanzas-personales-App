@@ -345,6 +345,7 @@ export default function GoalsScreen() {
           style={styles.input}
           placeholder="Ej: Moto, laptop, viaje"
           value={title}
+          placeholderTextColor="#94A3B8"
           onChangeText={setTitle}
         />
 
@@ -391,6 +392,7 @@ export default function GoalsScreen() {
           placeholder="Ej: 500"
           keyboardType="numeric"
           value={targetAmount}
+          placeholderTextColor="#94A3B8"
           onChangeText={setTargetAmount}
         />
 
@@ -569,6 +571,7 @@ export default function GoalsScreen() {
               placeholder="Ej: 20"
               keyboardType="numeric"
               value={savingAmount}
+              placeholderTextColor="#94A3B8"
               onChangeText={setSavingAmount}
             />
 
@@ -710,6 +713,7 @@ const styles = StyleSheet.create({
     padding: 15,
     fontSize: 16,
     marginBottom: 14,
+    color: '#1E293B',
   },
   helperText: {
     color: '#64748B',
@@ -901,44 +905,44 @@ const styles = StyleSheet.create({
   },
 
   goalDate: {
-  marginTop: 10,
-  color: '#475569',
-  fontWeight: '600',
-},
+    marginTop: 10,
+    color: '#475569',
+    fontWeight: '600',
+  },
 
-goalStatus: {
-  marginTop: 6,
-  fontWeight: 'bold',
-  color: '#2563EB',
-},
+  goalStatus: {
+    marginTop: 6,
+    fontWeight: 'bold',
+    color: '#2563EB',
+  },
 
-goalDays: {
-  marginTop: 4,
-  color: '#F59E0B',
-  fontWeight: '600',
-},
-datePlaceholder: {
-  color: '#94A3B8',
-  fontSize: 16,
-},
+  goalDays: {
+    marginTop: 4,
+    color: '#F59E0B',
+    fontWeight: '600',
+  },
+  datePlaceholder: {
+    color: '#94A3B8',
+    fontSize: 16,
+  },
 
-dateSelected: {
-  color: '#0F172A',
-  fontSize: 16,
-  fontWeight: '600',
-},
+  dateSelected: {
+    color: '#0F172A',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 
-historyCard: {
-  marginTop: 14,
-  paddingTop: 12,
-  borderTopWidth: 1,
-  borderTopColor: '#E2E8F0',
-},
+  historyCard: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
 
-historyTitle: {
-  fontWeight: 'bold',
-  color: '#1E293B',
-  marginBottom: 10,
-  fontSize: 16,
-},
+  historyTitle: {
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 10,
+    fontSize: 16,
+  },
 });

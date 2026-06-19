@@ -64,6 +64,7 @@ export default function LoginScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
+            placeholderTextColor="#94A3B8"
             onChangeText={setEmail}
           />
 
@@ -75,6 +76,7 @@ export default function LoginScreen() {
               placeholder="Ingresa tu contraseña"
               secureTextEntry={!showPassword}
               value={password}
+              placeholderTextColor="#94A3B8"
               onChangeText={setPassword}
             />
 
@@ -166,6 +168,7 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     marginBottom: 16,
+    color: '#1E293B',
   },
   passwordContainer: {
     backgroundColor: '#F8FAFC',

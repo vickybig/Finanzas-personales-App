@@ -69,7 +69,7 @@ export default function StatisticsScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [filterType, setFilterType] = useState<
-    'all' | 'week' | 'month' | 'year'
+    'week' | 'month' | 'year'
   >('year');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(
@@ -133,7 +133,7 @@ export default function StatisticsScreen() {
         return date.getFullYear() === selectedYear;
 
       default:
-        return true;
+        return date.getFullYear() === selectedYear;
     }
   });
 
@@ -224,7 +224,6 @@ export default function StatisticsScreen() {
         }}
       >
         {[
-          { label: 'Todo', value: 'all' },
           { label: 'Semana', value: 'week' },
           { label: 'Mes', value: 'month' },
           { label: 'Año', value: 'year' },

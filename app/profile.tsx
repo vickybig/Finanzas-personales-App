@@ -186,6 +186,7 @@ export default function ProfileScreen() {
               style={styles.input}
               value={editedName}
               onChangeText={setEditedName}
+              placeholderTextColor="#94A3B8"
               placeholder="Ingresa tu nombre"
             />
 
@@ -195,6 +196,7 @@ export default function ProfileScreen() {
               value={editedEmail}
               onChangeText={setEditedEmail}
               placeholder="Ingresa tu correo"
+              placeholderTextColor="#94A3B8"
               keyboardType="email-address"
               autoCapitalize="none"
             />

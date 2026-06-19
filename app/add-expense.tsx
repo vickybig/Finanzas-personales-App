@@ -87,6 +87,7 @@ export default function AddExpenseScreen() {
         placeholder="$ 0.00"
         keyboardType="numeric"
         value={amount}
+        placeholderTextColor="#94A3B8"
         onChangeText={setAmount}
       />
 
@@ -95,6 +96,7 @@ export default function AddExpenseScreen() {
         style={styles.input}
         placeholder="Ej: Compras del supermercado"
         value={description}
+        placeholderTextColor="#94A3B8"
         onChangeText={setDescription}
       />
 
@@ -197,6 +199,7 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     marginBottom: 12,
+    color: '#1E293B',
   },
   categoriesContainer: {
     flexDirection: 'row',

@@ -156,6 +156,7 @@ export default function RegisterScreen() {
             style={styles.input}
             placeholder="Ej: Victor Vicente"
             value={name}
+            placeholderTextColor="#94A3B8"
             onChangeText={setName}
           />
 
@@ -166,6 +167,7 @@ export default function RegisterScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
+            placeholderTextColor="#94A3B8"
             onChangeText={setEmail}
           />
 
@@ -176,6 +178,7 @@ export default function RegisterScreen() {
               placeholder="Crea una contraseña"
               secureTextEntry={!showPassword}
               value={password}
+              placeholderTextColor="#94A3B8"
               onChangeText={setPassword}
             />
 
@@ -219,6 +222,7 @@ export default function RegisterScreen() {
               placeholder="Repite tu contraseña"
               secureTextEntry={!showConfirmPassword}
               value={confirmPassword}
+              placeholderTextColor="#94A3B8"
               onChangeText={setConfirmPassword}
             />
 
@@ -311,6 +315,7 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     marginBottom: 14,
+    color: '#1E293B',
   },
   passwordContainer: {
     backgroundColor: '#F8FAFC',
