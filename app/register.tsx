@@ -330,6 +330,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     fontSize: 16,
+    color: '#1E293B',
   },
   eyeButton: {
     paddingHorizontal: 16,
