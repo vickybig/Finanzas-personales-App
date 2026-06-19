@@ -72,6 +72,9 @@ export default function StatisticsScreen() {
     'all' | 'week' | 'month' | 'year'
   >('year');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(
+    new Date().getFullYear()
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -95,7 +98,7 @@ export default function StatisticsScreen() {
     }
   }
 
-  const currentYear = new Date().getFullYear();
+  const currentYear = selectedYear;
   const monthlyIncome = Array(12).fill(0);
   const monthlyExpense = Array(12).fill(0);
   const accumulatedIncome = Array(12).fill(0);
@@ -106,6 +109,7 @@ export default function StatisticsScreen() {
   const expenseCategories = officialExpenseCategories;
   const activeCategory = selectedCategory || expenseCategories[0];
   const now = new Date();
+  const years = [2024, 2025, 2026, 2027];
 
    const filteredTransactions = transactions.filter((transaction) => {
     const date = new Date(transaction.date);
@@ -122,11 +126,11 @@ export default function StatisticsScreen() {
       case 'month':
         return (
           date.getMonth() === selectedMonth &&
-          date.getFullYear() === now.getFullYear()
+          date.getFullYear() === selectedYear
         );
 
       case 'year':
-        return date.getFullYear() === now.getFullYear();
+        return date.getFullYear() === selectedYear;
 
       default:
         return true;
@@ -248,6 +252,61 @@ export default function StatisticsScreen() {
         ))}
       </View>
 
+      {filterType === 'year' && (
+        <View
+          style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: 16,
+            padding: 12,
+            marginBottom: 20,
+            elevation: 2,
+            borderWidth: 1,
+            borderColor: '#E2E8F0',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: '600',
+              color: '#334155',
+              marginBottom: 10,
+            }}
+          >
+            Selecciona un año
+          </Text>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              gap: 8,
+            }}
+          >
+            {years.map((year) => (
+              <Pressable
+                key={year}
+                style={{
+                  backgroundColor:
+                    selectedYear === year ? '#10B981' : '#E2E8F0',
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  borderRadius: 20,
+                }}
+                onPress={() => setSelectedYear(year)}
+              >
+                <Text
+                  style={{
+                    color: selectedYear === year ? '#FFF' : '#334155',
+                    fontWeight: '600',
+                  }}
+                >
+                  {year}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
       {filterType === 'month' && (
         <View
           style={{

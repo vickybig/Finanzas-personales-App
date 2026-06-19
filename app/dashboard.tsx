@@ -202,11 +202,17 @@ export default function DashboardScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerInfo}>
           <Text style={styles.appName}>FinGo</Text>
-          <Text style={styles.greeting}>
+
+          <Text
+            style={styles.greeting}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+         >
             Hola, {user?.name?.split(' ')[0] || 'Usuario'} 👋
           </Text>
+
           <Text style={styles.dateText}>{currentDate}</Text>
         </View>
 
@@ -406,11 +412,15 @@ const styles = StyleSheet.create({
     paddingBottom: 35,
   },
   header: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: 20,
-},
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  headerInfo: {
+    flex: 1,
+    marginRight: 10,
+  },
   appName: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -421,6 +431,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: 'bold',
     color: '#1E293B',
+    flexShrink: 1,
   },
   dateText: {
     color: '#64748B',
