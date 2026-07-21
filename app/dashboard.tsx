@@ -219,7 +219,7 @@ export default function DashboardScreen() {
         <View style={styles.headerButtons}>
           <Link href="/financial-ai" asChild>
             <Pressable style={styles.profileButton}>
-              <Text style={styles.profileIcon}>🧠</Text>
+              <Text style={styles.profileIcon}>⭐</Text>
             </Pressable>
           </Link>
 
@@ -332,13 +332,13 @@ export default function DashboardScreen() {
       </View>
 
       {latestTransactions.length === 0 ? (
-  <View style={styles.emptyCard}>
-    <Text style={styles.emptyTitle}>Aún no hay movimientos</Text>
-    <Text style={styles.emptyText}>
-      Registra tu primer ingreso o gasto para empezar a controlar tus finanzas.
-    </Text>
-  </View>
-) : (
+      <View style={styles.emptyCard}>
+        <Text style={styles.emptyTitle}>Aún no hay movimientos</Text>
+        <Text style={styles.emptyText}>
+          Registra tu primer ingreso o gasto para empezar a controlar tus finanzas.
+        </Text>
+      </View>
+    ) : (
   filteredTransactions.map((item) => {
     const normalizedCategory = normalizeCategory(item.type, item.category);
     const categoryIcon = getCategoryIcon(item.type, item.category);
@@ -638,45 +638,45 @@ const styles = StyleSheet.create({
   color: '#64748B',
   fontWeight: '600',
   fontSize: 12,
-},
-  filterContainer: {
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  gap: 8,
-  marginBottom: 14,
-},
+  },
+    filterContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
 
-filterButton: {
-  backgroundColor: '#E2E8F0',
-  paddingHorizontal: 12,
-  paddingVertical: 8,
-  borderRadius: 12,
-},
+  filterButton: {
+    backgroundColor: '#E2E8F0',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
 
-activeFilter: {
-  backgroundColor: '#2563EB',
-},
+  activeFilter: {
+    backgroundColor: '#2563EB',
+  },
 
-filterText: {
-  color: '#1E293B',
-  fontWeight: 'bold',
-},
- headerButtons: {
-  flexDirection: 'row',
-  gap: 10,
-},
+  filterText: {
+    color: '#1E293B',
+    fontWeight: 'bold',
+  },
+  headerButtons: {
+   flexDirection: 'row',
+   gap: 10,
+  },
   profileButton: {
-  width: 42,
-  height: 42,
-  borderRadius: 21,
-  backgroundColor: '#FFFFFF',
-  justifyContent: 'center',
-  alignItems: 'center',
-  elevation: 2,
-},
+   width: 42,
+   height: 42,
+   borderRadius: 21,
+   backgroundColor: '#FFFFFF',
+   justifyContent: 'center',
+   alignItems: 'center',
+   elevation: 2,
+ },
 
-profileIcon: {
-  fontSize: 20,
-},
+  profileIcon: {
+    fontSize: 20,
+  },
 
 });

@@ -137,7 +137,7 @@ export default function FinancialAIScreen() {
       </Pressable>
 
       <Text style={styles.appName}>FinGo</Text>
-      <Text style={styles.title}>FinGo AI 🧠</Text>
+      <Text style={styles.title}>FinGo Avanzado ⭐</Text>
       <Text style={styles.subtitle}>
         Análisis automático de tus ingresos, gastos, saldo y hábitos financieros.
       </Text>
